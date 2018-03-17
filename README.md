@@ -1,2 +1,2 @@
 # w203-Lab3
-Contributors: Harith Elrifaie and Gaurav Desai
+Contributors: Harith Elrufaie and Gaurav Desai
