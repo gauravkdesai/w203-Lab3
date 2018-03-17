@@ -1,0 +1,24 @@
+---
+title: "ReducingCrime"
+subtitle: "w203 Lab3"
+author: "Harith Elrufai and Gaurav Desai"
+date: "3/17/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load crime data File}
+rawCrimeData = read.csv("crime_v2.csv")
+```
+
+```{r basic EDA of raw data}
+str(rawCrimeData) # 97 obs, 25 variables. This is odd, if i open file in excel i see 92 rows with headers so thats 91 obs
+summary(rawCrimeData)
+```
+```{r data cleanup}
+#convert county to facor may be?
+#check for Na in any of the variables
+```
