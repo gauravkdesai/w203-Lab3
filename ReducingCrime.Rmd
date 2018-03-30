@@ -12,10 +12,7 @@ Perform an exploratory analysis to understand how campaign characteristics are r
 First, we load the necessary libraries.
 
 ```{r library}
-#library(plyr)
-#library(plyr) #for ddply
-#library(dplyr) #for ndistinct
-#library(ggplot2)
+library(stargazer)
 ```
 
 Then we load the dataset, which is in the same directory as this RMD.
@@ -225,6 +222,15 @@ hist(crimeData$mix, breaks=20)
 hist(log(crimeData$mix), breaks=20)
 ```
 
+### pctymle: percent young male
+
+Looking at the histogram, the distribution appear to be positvely skewed. Applying `log()` shows the histogram to appear positvely skewed with one outlier.
+
+```{r }
+hist(crimeData$pctymle, breaks=20)
+hist(log(crimeData$pctymle), breaks=20)
+```
+
 ## Analysis of Key Relationships
 
 ### Crimes Committed per person (crmrte) & People per sq. (density)
@@ -235,6 +241,31 @@ plot(log(crimeData$density), log(crimeData$crmrte),
     xlab="People per sq",
     ylab="Crimes Committed per person")
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$density)))
+cor(crimeData$crmrte, crimeData$density)
+```
+
+### Crimes Committed per person (crmrte) & Police per capita (polpc)
+
+```{r }
+plot(log(crimeData$polpc), log(crimeData$crmrte), 
+    main="Crime Density vs Young Male", 
+    xlab="Poilice per capita",
+    ylab="Crimes Committed per person")
+abline(lm(log(crimeData$crmrte) ~ log(crimeData$polpc)))
+cor(crimeData$crmrte, crimeData$polpc)
+```
+
+
+
+### Crimes Committed per person (crmrte) & Perfect of Young Male (pctymle)
+
+```{r }
+plot(log(crimeData$pctymle), log(crimeData$crmrte), 
+    main="Crime Density vs Young Male", 
+    xlab="Young Male",
+    ylab="Crimes Committed per person")
+abline(lm(log(crimeData$crmrte) ~ log(crimeData$pctymle)))
+cor(crimeData$crmrte, crimeData$pctymle)
 ```
 
 ### Crimes Committed per person (crmrte) & Wages
@@ -287,5 +318,30 @@ plot(log(crimeData$wloc), log(crimeData$crmrte),
     xlab="Wekly Wages",
     ylab="Crimes Committed per person")
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$wloc)))
-
 ```
+
+# Proposed Models
+
+## Model#1: with only the explanatory variables
+
+$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(prbarr) + \beta_3 \cdot log(prbconv) + \beta_4 \cdot log(mix) + \beta_5 \cdot log(pctymle)$$
+
+```{r model1}
+model1 <- lm(log(crmrte) ~ log(density) + log(prbarr) + log(prbconv) + log(mix) + log(pctymle), data=crimeData)
+summary(model1)
+plot(model1)
+```
+
+## Model#2: with key explanatory variables and only covariates
+
+$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(prbarr) + \beta_3 \cdot log(prbconv) + \beta_4 \cdot log(mix) + \beta_5 \cdot log(pctymle) + \beta_6 \cdot log(polpc)$$
+
+```{r model2}
+model2 <- lm(log(crmrte) ~ log(density) + log(prbarr) + log(prbconv) + log(mix) + log(pctymle) + log(polpc), data=crimeData)
+summary(model2)
+plot(model2)
+```
+
+
+## Model#3: includes the previous covariates, and most, if not all, other covariates
+
