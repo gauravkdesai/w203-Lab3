@@ -20,7 +20,6 @@ Then we load the dataset, which is in the same directory as this RMD.
 ```{r data}
 # Load the data 
 rawCrimeData = read.csv("crime_v2.csv")
-View(rawCrimeData)
 str(rawCrimeData)
 ```
 
@@ -28,13 +27,13 @@ The dataset contains 25 columns (variables) and 97 rows
 
 ## Data Quality/Clean-up
 
-```{r }
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 apply(!is.na(rawCrimeData[,]), MARGIN = 2, mean)
 ```
 
 the dataset contains few NA that we'll need to fix before proceeding further. 
 
-```{r }
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 complete.cases(rawCrimeData)
 crimeData <- rawCrimeData[complete.cases(rawCrimeData), ]
 apply(!is.na(crimeData[,]), MARGIN = 2, mean)
@@ -48,275 +47,281 @@ now we're good to go.
 
 Looking at the histogram of crime per person, the distribution appear to be positelvey skewed. Applying `log()` on crime shows the histogram to appear normally distributed.
 
-```{r }
-hist(crimeData$crmrte, breaks=20, main = "Crimes Committed per Person")
-hist(log(crimeData$crmrte), breaks=20, main = "Crimes Committed per Person")
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$crmrte, breaks=20, main = "Crimes Committed", cex.main=0.8)
+hist(log(crimeData$crmrte), breaks=20, main = "Log Crimes Committed", cex.main=0.8)
 ```
 
 ### prbarr: probability of arrest
 
 Looking at the histogram of arrest per person, the distribution appear to be positelvey skewed. Applying `log()` shows the histogram to appear *less* normally distributed.
 
-```{r }
-hist(crimeData$prbarr, breaks=20, main = "probability of Arrest per Person")
-hist(log(crimeData$prbarr), breaks=20, main = "Probability of Arrest per Person")
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$prbarr, breaks=20, main = "probability of Arrest", cex.main=0.8)
+hist(log(crimeData$prbarr), breaks=20, main = "Log Probability of Arrest Log", cex.main=0.8)
 ```
 
 ### prbconv: probability of conviction
 
-First, we'll need to concert the field from Factor to numeric for further analysis. Looking at the histogram of probability of conviction, the distribution appear to be positelvey skewed. Applying `log()` shows the histogram to appear normally distributed.
+First, we'll need to concert the field from Factor to numeric for further analysis. 
 
 ```{r }
 crimeData$prbconv <- as.numeric(as.character(crimeData$prbconv))
-hist(crimeData$prbconv, breaks=20, main = "Probability of conviction")
-hist(log(crimeData$prbconv), breaks=20, main = "Probability of conviction")
+```
+
+Looking at the histogram of probability of conviction, the distribution appear to be positelvey skewed. Applying `log()` shows the histogram to appear normally distributed.
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+crimeData$prbconv <- as.numeric(as.character(crimeData$prbconv))
+hist(crimeData$prbconv, breaks=20, main = "Probability of Conviction",  cex.main=0.8)
+hist(log(crimeData$prbconv), breaks=20, main = "Log Probability of Conviction",  cex.main=0.8)
 ```
 
 ### prbpris: of prison sentence
 
 Looking at the histogram of probability of sentence, the distribution appear to be relatively normal. Applying `log()` shows the histogram to appear *less* normally distributed.
 
-```{r }
-hist(crimeData$prbpris, breaks=20, main = "Probability of sentence")
-hist(log(crimeData$prbpris), breaks=20, main = "Probability of sentence")
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$prbpris, breaks=20, main = "Probability of Sentence",  cex.main=0.8)
+hist(log(crimeData$prbpris), breaks=20, main = "Log Probability of Sentence",  cex.main=0.8)
 ```
 
 ### avgsen: avg. sentence, days
 
 Looking at the histogram of probability of sentence, the distribution appear to be positevely skewed. Applying `log()` shows the histogram to appear *more* normally distributed.
 
-```{r }
-hist(crimeData$avgsen, breaks=20, main = "avg. sentence in days")
-hist(log(crimeData$avgsen), breaks=20, main = "avg. sentence in days")
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$avgsen, breaks=20, main = "Avg sentence in days", cex.main=0.8)
+hist(log(crimeData$avgsen), breaks=20, main = "Log Avg sentence in days", cex.main=0.8)
 ```
 
 ### polpc: police per capita
 
 Looking at the histogram of probability of sentence, the distribution appear to be positevely skewed. Applying `log()` shows the histogram to appear *more* normally distributed.
 
-```{r }
-hist(crimeData$polpc, breaks=20, main = "police per capita")
-hist(log(crimeData$polpc), breaks=20, main = "police per capita")
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$polpc, breaks=20, main = "Police per capita", cex.main=0.8)
+hist(log(crimeData$polpc), breaks=20, main = "Log Police per capita", cex.main=0.8)
 ```
 
 ### density: people per sq. mile
 
 Looking at the histogram of probability of sentence, the distribution appear to be positevely skewed. Applying `log()` shows the histogram to appear *more* normally distributed, with one outlier.
 
-```{r }
-hist(crimeData$density, breaks=20, main = "people per sq. mile")
-hist(log(crimeData$density), breaks=20, main = "people per sq. mile")
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$density, breaks=20, main = "People per sq. mile", cex.main=0.8)
+hist(log(crimeData$density), breaks=20, main = "Log People per sq. mile", cex.main=0.8)
 ```
 
 ### taxpc: tax revenue per capita
 
 Looking at the histogram of probability of sentence, the distribution appear to be positevely skewed. Applying `log()` shows the histogram to appear slightly positevely skewed.
 
-```{r }
-hist(crimeData$taxpc, breaks=20, main = "tax revenue per capita")
-hist(log(crimeData$taxpc), breaks=20, main = "tax revenue per capita")
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$taxpc, breaks=20, main = "Tax revenue per capita", cex.main=0.8)
+hist(log(crimeData$taxpc), breaks=20, main = "Log Tax revenue per capita", cex.main=0.8)
 ```
 
 ### taxpc: tax revenue per capita
 
 Looking at the histogram of probability of sentence, the distribution appear to be positevely skewed. Applying `log()` shows the histogram to appear slightly positevely skewed.
 
-```{r }
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 barplot(c(sum(crimeData$urban), sum(crimeData$west), sum(crimeData$central)),
-names.arg = c("Urban", "West", "Central"), main = "Part of the state counties are in")
+  names.arg = c("Urban", "West", "Central"), main = "Part of the state counties are in", cex.main=0.8, cex.names = 0.7)
 ```
 
 ### pctmin80: perc. minority, 1980
 
 Looking at the histogram of probability of sentence, the distribution appear to be slightly positevely skewed. Applying `log()` shows the histogram to appear negatively skewed.
 
-```{r }
-hist(crimeData$pctmin80, breaks=20, main = "perc. minority")
-hist(log(crimeData$pctmin80), breaks=20, main = "perc. minority")
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$pctmin80, breaks=20, main = "Perc. minority")
+hist(log(crimeData$pctmin80), breaks=20, main = "Log Perc. minority")
 ```
 
 ### wcon: weekly wage, construction
 
 Looking at the histogram of probability of sentence, the distribution appear to be slightly positevely skewed. Applying `log()` shows the histogram to appear normally distributed
 
-```{r }
-hist(crimeData$wcon, breaks=20, main = "Weekly wage")
-hist(log(crimeData$wcon), breaks=20, main = "Weekly wage")
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$wcon, breaks=20, main = "Weekly wage (Construction)", cex.main=.8)
+hist(log(crimeData$wcon), breaks=20, main = "Log Weekly wage (Construction)", cex.main=.8)
 ```
 
 ### wtuc: wkly wge, trns, util, commun
 
 Looking at the histogram, the distribution appear to be normally distribbuted.
 
-```{r }
-hist(crimeData$wtuc, breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$wtuc, breaks=20, main = "Weekly wage (trns/util/commun)", cex.main=.8)
 ```
 
 ### wtrd: wkly wge, whlesle, retail trade
 
 Looking at the histogram, the distribution appear to be positvely skewed. Applying `log()` shows the histogram to appear normally distributed
 
-```{r }
-hist(crimeData$wtrd, breaks=20)
-hist(log(crimeData$wtrd), breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$wtrd, breaks=20, main = "Weekly wage (whlesle, retail)", cex.main=.8)
+hist(log(crimeData$wtrd), breaks=20, main = "Log Weekly wage (whlesle, retail)", cex.main=.8)
 ```
 
 ### wfir: wkly wge, fin, ins, real est
 
 Looking at the histogram, the distribution appear to be normally distribbuted.
 
-```{r }
-hist(crimeData$wfir, breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$wfir, breaks=20, main = "Weekly wage (wge, fin, ins, real est)", cex.main=.8)
 ```
 
 ### wser: wkly wge, service industry
 
 Looking at the histogram, the distribution appear to be positvely skewed. Applying `log()` shows the histogram to appear normally distributed with one outlier.
 
-```{r }
-hist(crimeData$wser, breaks=20)
-hist(log(crimeData$wser), breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$wser, breaks=20, main = "Weekly wage (service industry)", cex.main=.8)
+hist(log(crimeData$wser), breaks=20, main = "Log Weekly wage (service industry)", cex.main=.8)
 ```
 
 ### wmfg: wkly wge, manufacturing
 
 Looking at the histogram, the distribution appear to be slighly positvely skewed. Applying `log()` shows the histogram to appear normally distributed.
 
-```{r }
-hist(crimeData$wmfg, breaks=20)
-hist(log(crimeData$wmfg), breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$wmfg, breaks=20, main = "Weekly wage (manufacturing)", cex.main=.8)
+hist(log(crimeData$wmfg), breaks=20, main = "Log Weekly wage (manufacturing)", cex.main=.8)
 ```
 
 ### wfed: wkly wge, fed employees
 
 Applying `log()` shows the histogram to appear normally distributed.
 
-```{r }
-hist(crimeData$wfed, breaks=20)
-hist(log(crimeData$wfed), breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$wfed, breaks=20, main = "Weekly wage (fed employees)", cex.main=.8)
+hist(log(crimeData$wfed), breaks=20, main = "Weekly wage (fed employees)", cex.main=.8)
 ```
 
 ### wsta: wkly wge, state employees
 
 Looking at the histogram, the distribution appear to be slighly positvely skewed. Applying `log()` shows the histogram to appear normally distributed.
 
-```{r }
-hist(crimeData$wsta, breaks=20)
-hist(log(crimeData$wsta), breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$wsta, breaks=20, main = "Weekly wage (state employees)", cex.main=.8)
+hist(log(crimeData$wsta), breaks=20, main = "Log Weekly wage (state employees)", cex.main=.8)
 ```
 
-### wloc: wkly wge, state employees
+### wloc: wkly wge, local gov emps
 
 Looking at the histogram, the distribution appear to be slighly normally distributed.
 
-```{r }
-hist(crimeData$wloc, breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$wloc, breaks=20, main = "Weekly wage (local gov employees)", cex.main=.8)
 ```
 
 ### mix: offense mix: face-to-face/other
 
 Looking at the histogram, the distribution appear to be slighly positvely skewed. Applying `log()` shows the histogram to appear normally distributed.
 
-```{r }
-hist(crimeData$mix, breaks=20)
-hist(log(crimeData$mix), breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$mix, breaks=20, main = "Face-to-face/other", cex.main=.8)
+hist(log(crimeData$mix), breaks=20, main = "Face-to-face/other", cex.main=.8)
 ```
 
 ### pctymle: percent young male
 
 Looking at the histogram, the distribution appear to be positvely skewed. Applying `log()` shows the histogram to appear positvely skewed with one outlier.
 
-```{r }
-hist(crimeData$pctymle, breaks=20)
-hist(log(crimeData$pctymle), breaks=20)
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$pctymle, breaks=20, main = "Percent Young Male", cex.main=.8)
+hist(log(crimeData$pctymle), breaks=20, main = "Log Percent Young Male", cex.main=.8)
 ```
 
 ## Analysis of Key Relationships
 
 ### Crimes Committed per person (crmrte) & People per sq. (density)
 
-```{r }
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 plot(log(crimeData$density), log(crimeData$crmrte), 
     main="Crime Density vs Crime Rate", 
-    xlab="People per sq",
-    ylab="Crimes Committed per person")
+    xlab="Log Density",
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$density)))
 cor(crimeData$crmrte, crimeData$density)
 ```
 
 ### Crimes Committed per person (crmrte) & Police per capita (polpc)
 
-```{r }
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 plot(log(crimeData$polpc), log(crimeData$crmrte), 
-    main="Crime Density vs Young Male", 
+    main="Crime Density vs Police per capita", 
     xlab="Poilice per capita",
-    ylab="Crimes Committed per person")
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$polpc)))
 cor(crimeData$crmrte, crimeData$polpc)
 ```
 
 
 
-### Crimes Committed per person (crmrte) & Perfect of Young Male (pctymle)
+### Crimes Committed per person (crmrte) & Percent of Young Male (pctymle)
 
-```{r }
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 plot(log(crimeData$pctymle), log(crimeData$crmrte), 
     main="Crime Density vs Young Male", 
-    xlab="Young Male",
-    ylab="Crimes Committed per person")
+    xlab="Percent Young Male",
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$pctymle)))
 cor(crimeData$crmrte, crimeData$pctymle)
 ```
 
 ### Crimes Committed per person (crmrte) & Wages
 
-```{r }
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 plot(crimeData$wcon, log(crimeData$crmrte), 
     main="Wekly Wages (trns, util, commun) vs Crime Rate", 
     xlab="Wekly Wages",
-    ylab="Crimes Committed per person")
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ crimeData$wcon))
 
 plot(log(crimeData$wtrd), log(crimeData$crmrte), 
     main="Wekly Wages (whlesle, retail trade) vs Crime Rate", 
     xlab="Wekly Wages",
-    ylab="Crimes Committed per person")
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$wtrd)))
 
 plot(crimeData$wfir, log(crimeData$crmrte), 
     main="Wekly Wages (fin, ins, real est) vs Crime Rate", 
     xlab="Wekly Wages",
-    ylab="Crimes Committed per person")
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ crimeData$wfir))
 
 plot(log(crimeData$wser), log(crimeData$crmrte), 
     main="Wekly Wages (service industry) vs Crime Rate", 
     xlab="Wekly Wages",
-    ylab="Crimes Committed per person")
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$wser)))
 
 plot(log(crimeData$wmfg), log(crimeData$crmrte), 
     main="Wekly Wages (manufacturing) vs Crime Rate", 
     xlab="Wekly Wages",
-    ylab="Crimes Committed per person")
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$wmfg)))
 
 plot(log(crimeData$wfed), log(crimeData$crmrte), 
     main="Wekly Wages (fed employees) vs Crime Rate", 
     xlab="Wekly Wages",
-    ylab="Crimes Committed per person")
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$wfed)))
 
 plot(crimeData$wsta, log(crimeData$crmrte), 
     main="Wekly Wages (state employees) vs Crime Rate", 
     xlab="Wekly Wages",
-    ylab="Crimes Committed per person")
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ crimeData$wsta))
 
 plot(log(crimeData$wloc), log(crimeData$crmrte), 
     main="Wekly Wages (local gov emps) vs Crime Rate", 
     xlab="Wekly Wages",
-    ylab="Crimes Committed per person")
+    ylab="Crimes Committed", cex.main=0.8)
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$wloc)))
 ```
 
