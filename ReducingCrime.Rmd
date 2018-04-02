@@ -1,11 +1,13 @@
 ---
 title: "<Draft> Lab3: Reducing Crime"
+subtitle: "w203 Lab3"
+author: "Harith Elrufaie and Gaurav Desai"
 output: pdf_document
 ---
 
 # Exploratory Data Analysis
 
-Perform an exploratory analysis to understand how campaign characteristics are related to the candidate's debt. 
+Perform an exploratory analysis to understand understand the determinants of crime and to generate policy suggestions that are applicable to local government.
 
 ## Setup
 
@@ -13,6 +15,7 @@ First, we load the necessary libraries.
 
 ```{r library}
 library(stargazer)
+library(corrplot)
 ```
 
 Then we load the dataset, which is in the same directory as this RMD.
@@ -40,6 +43,8 @@ apply(!is.na(crimeData[,]), MARGIN = 2, mean)
 ```
 
 now we're good to go.
+
+------
 
 ## Univariate Variable Analysis of Key Variables
 
@@ -236,9 +241,35 @@ hist(crimeData$pctymle, breaks=20, main = "Percent Young Male", cex.main=.8)
 hist(log(crimeData$pctymle), breaks=20, main = "Log Percent Young Male", cex.main=.8)
 ```
 
+
+------
+
 ## Analysis of Key Relationships
 
+It is very imperative to realize the relationship between crime rate and all the data available to us. We'll use `corrplot` to make the exploration of key relationships clearer.
+
+```{r fig.align='center'}
+corrplot(cor(crimeData[ , (names(crimeData) %in% c("crmrte", "prbarr", "prbconv", "prbpris", "avgsen", "polpc", "density", "taxpc", "west", "central", "uraban", "pctmin80", "wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc", "mix", "pctymle"))]), method="circle", type="upper")
+```
+
+The above plot indicates the following *positive* relationships with crime rate:
+\begin{enumerate}
+  \item Density (density).
+  \item Tax revenue per capita (taxpc).
+  \item All wage varibles.
+  \item Young Male (pctymle)
+\end{enumerate}
+
+The above plot also indicates the following *negative* relationships with crime rate:
+\begin{enumerate}
+  \item Probabiliy of Arrest (prbarr)
+  \item Probablity of Conviction (prbconv)
+  \item West region of NC (west)
+\end{enumerate}
+
 ### Crimes Committed per person (crmrte) & People per sq. (density)
+
+As you can see from the correlation plot below, there is a positive linear relationship between crime rate and density. 
 
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 plot(log(crimeData$density), log(crimeData$crmrte), 
@@ -249,28 +280,15 @@ abline(lm(log(crimeData$crmrte) ~ log(crimeData$density)))
 cor(crimeData$crmrte, crimeData$density)
 ```
 
-### Crimes Committed per person (crmrte) & Police per capita (polpc)
+### Crimes Committed per person (crmrte) & Tax revenue per capita (taxpc)
 
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-plot(log(crimeData$polpc), log(crimeData$crmrte), 
-    main="Crime Density vs Police per capita", 
-    xlab="Poilice per capita",
+plot(log(crimeData$taxpc), log(crimeData$crmrte), 
+    main="Tax revenue per capita vs Crime Rate", 
+    xlab="Tax revenue per capita",
     ylab="Crimes Committed", cex.main=0.8)
-abline(lm(log(crimeData$crmrte) ~ log(crimeData$polpc)))
-cor(crimeData$crmrte, crimeData$polpc)
-```
-
-
-
-### Crimes Committed per person (crmrte) & Percent of Young Male (pctymle)
-
-```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-plot(log(crimeData$pctymle), log(crimeData$crmrte), 
-    main="Crime Density vs Young Male", 
-    xlab="Percent Young Male",
-    ylab="Crimes Committed", cex.main=0.8)
-abline(lm(log(crimeData$crmrte) ~ log(crimeData$pctymle)))
-cor(crimeData$crmrte, crimeData$pctymle)
+abline(lm(log(crimeData$crmrte) ~ log(crimeData$taxpc)))
+cor(crimeData$crmrte, crimeData$taxpc)
 ```
 
 ### Crimes Committed per person (crmrte) & Wages
@@ -325,28 +343,76 @@ plot(log(crimeData$wloc), log(crimeData$crmrte),
 abline(lm(log(crimeData$crmrte) ~ log(crimeData$wloc)))
 ```
 
+### Crimes Committed per person (crmrte) & Probabiliy of Arrest (prbarr)
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(log(crimeData$prbarr), log(crimeData$crmrte), 
+    main="Probabiliy of Arrest vs Crime Rate", 
+    xlab="Probabiliy of Arrest",
+    ylab="Crimes Committed", cex.main=0.8)
+abline(lm(log(crimeData$crmrte) ~ log(crimeData$prbarr)))
+cor(crimeData$crmrte, crimeData$prbarr)
+```
+
+### Crimes Committed per person (crmrte) & Tax revenue per capita (prbconv)
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(log(crimeData$prbconv), log(crimeData$crmrte), 
+    main="Probablity of Conviction vs Crime Rate", 
+    xlab="Probablity of Conviction",
+    ylab="Crimes Committed", cex.main=0.8)
+abline(lm(log(crimeData$crmrte) ~ log(crimeData$prbconv)))
+cor(crimeData$crmrte, crimeData$prbconv)
+```
+
+------
+
 # Proposed Models
 
-## Model#1: with only the explanatory variables
+## Model 1: with only the explanatory variables
 
-$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(prbarr) + \beta_3 \cdot log(prbconv) + \beta_4 \cdot log(mix) + \beta_5 \cdot log(pctymle)$$
+Using a combination of key positive and negative attributes to crime rate, we're recommending the following model:
 
-```{r model1}
-model1 <- lm(log(crmrte) ~ log(density) + log(prbarr) + log(prbconv) + log(mix) + log(pctymle), data=crimeData)
+$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(taxpc) + \beta_3 \cdot log(prbarr) + \\
+\beta_4 \cdot log(prbconv) + \beta_5 \cdot log(pctymle)$$
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+model1 <- lm(log(crmrte) ~ log(density) + log(taxpc) + log(prbarr) + log(prbconv) 
+             + log(pctymle), data=crimeData)
 summary(model1)
 plot(model1)
 ```
 
-## Model#2: with key explanatory variables and only covariates
+## Model 2: with key explanatory variables and only covariates
 
-$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(prbarr) + \beta_3 \cdot log(prbconv) + \beta_4 \cdot log(mix) + \beta_5 \cdot log(pctymle) + \beta_6 \cdot log(polpc)$$
+In this model, we'll include the variables (avgsen, mix), as we think they will contribute to the accuracy of your results without introducing substantial bias.
 
-```{r model2}
-model2 <- lm(log(crmrte) ~ log(density) + log(prbarr) + log(prbconv) + log(mix) + log(pctymle) + log(polpc), data=crimeData)
+$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(taxpc) + \beta_3 \cdot log(prbarr) + \\
+\beta_4 \cdot log(prbconv) + \beta_5 \cdot log(pctymle) + \beta_6 \cot log(avgsen) + \beta_7 \cot log(mix)$$
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+model2 <- lm(log(crmrte) ~ log(density) + log(taxpc) + log(prbarr) + log(prbconv) 
+             + log(pctymle) + log(avgsen) + log(mix), data=crimeData)
 summary(model2)
 plot(model2)
 ```
 
 
-## Model#3: includes the previous covariates, and most, if not all, other covariates
+## Model 3: includes the previous covariates, and most, if not all, other covariates
 
+In this model, we'll include all the data available to us to demonstrate the robustness of of results to model specification. 
+
+$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(taxpc) + \beta_3 \cdot log(prbarr) + \\
+\beta_4 \cdot log(prbconv) + \beta_5 \cdot log(pctymle) + \beta_6 \cdot log(avgsen) + \beta_7 \cdot log(mix) + \\
+\beta_8 \cdot log(prbpris) + \beta_9 \cdot log(polpc) + \beta_10 \cdot log(pctmin80) + \beta_11 \cdot log(wcon)  \\
++ \beta_11 \cdot log(wtrd) + \beta_12 \cdot wfir + \beta_13 \cdot log(wser) + \beta_14 \cdot log(wmfg)  \\ 
++ \beta_15 \cdot log(wfed) + \beta_16 \cdot log(wsta) + \beta_17 \cdot wloc$$
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+model3 <- lm(log(crmrte) ~ log(density) + log(taxpc) + log(prbarr) + log(prbconv) 
+             + log(pctymle) + log(avgsen) + log(mix) + log(prbpris) + log(polpc) 
+             + log(pctmin80) + log(wcon) + log(wtrd) + wfir + log(wser) + log(wmfg)
+             + log(wfed) + log(wsta) + wloc, data=crimeData)
+summary(model3)
+plot(model3)
+```
