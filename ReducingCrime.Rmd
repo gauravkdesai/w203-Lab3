@@ -416,3 +416,9 @@ model3 <- lm(log(crmrte) ~ log(density) + log(taxpc) + log(prbarr) + log(prbconv
 summary(model3)
 plot(model3)
 ```
+
+## Models Regressions 
+
+```{r } 
+stargazer(model1, model2, model3, type = "text")
+```
