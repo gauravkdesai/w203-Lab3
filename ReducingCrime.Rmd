@@ -6,19 +6,182 @@ date: "3/17/2018"
 output: pdf_document
 ---
 
+# Setup
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(car)
 ```
 
 ```{r load crime data File}
 rawCrimeData = read.csv("crime_v2.csv")
 ```
 
+# Data Cleanup and reformatting
 ```{r basic EDA of raw data}
-str(rawCrimeData) # 97 obs, 25 variables. This is odd, if i open file in excel i see 92 rows with headers so thats 91 obs
-summary(rawCrimeData)
+str(rawCrimeData) # 97 obs, 25 variables. This is odd, if i open file in excel i see 92 rows with headers so thats 91 obs. There are 6 NA's that we need to drop off.
+#summary(rawCrimeData)
 ```
+
+## drop NAs
 ```{r data cleanup}
-#convert county to facor may be?
-#check for Na in any of the variables
+crimeData <- rawCrimeData[!is.na(rawCrimeData$county),]
+```
+
+## Convert county to factor as it is not a measurement
+```{r}
+#county
+crimeData$county <- as.factor(crimeData$county)
+length(levels(crimeData$county)) #=> 90
+```
+This is interesting, we have 91 rows but only 90 levels.
+Eyeballing the data shows there are two identicle rows for county 193, same can be varifired using duplicated function.
+```{r}
+crimeData[duplicated(crimeData),]
+```
+so lets delete the duplicate row
+```{r}
+crimeData <- crimeData[!duplicated(crimeData),]
+```
+
+Now lets see if counties are exclusively marked as west or central or urban
+```{r}
+nrow(crimeData[crimeData$west+crimeData$central+crimeData$urban > 1,])
+nrow(crimeData[crimeData$west+crimeData$central+crimeData$urban == 0,])
+```
+so there are 7 counties which are under more than 1 category and 33 without any category.
+Lets create new varible "region" combining these three variables
+
+```{r}
+crimeData$region<-ifelse(crimeData$west==1,"West",NA)
+crimeData$region<-ifelse(crimeData$central==1,"Central",crimeData$region)
+crimeData$region<-ifelse(crimeData$urban==1,"Urban",crimeData$region)
+crimeData$region<-ifelse(crimeData$west+crimeData$central+crimeData$urban > 1,"Mixed",crimeData$region)
+crimeData$region<-ifelse(crimeData$west+crimeData$central+crimeData$urban == 0,"None",crimeData$region)
+crimeData$region <- as.factor(crimeData$region)
+summary(crimeData$region)
+```
+
+A final check to see if there are any more NAs left in the data
+```{r}
+crimeData[!complete.cases(crimeData),]
+```
+
+Now lets convert prbconv from factor to number because it is a probability value.
+```{r}
+crimeData$prbconv <- as.numeric(levels(crimeData$prbconv))[crimeData$prbconv]
+summary(crimeData$prbconv)
+```
+
+Now lets see if any of the probability is crossing 0 to 1 range
+```{r}
+filter(crimeData, prbarr< 0 | prbarr>1 | prbconv < 0 | prbconv > 1 | prbpris < 0 | prbpris > 1) [,c("county","prbarr","prbpris")]
+```
+We have 10 counties where prbconv is greater than 1 which means there are more convictions than arrests.
+Out of these 10 counties, one county 115 also has prbarr greater than 1 indicating more arrests than offences.
+We have two ways to clean this data, either we remove these 10 counties or we cap the max probabilities at 1.
+For this analysis we take second approach of capping the probabilities at 1.
+
+```{r}
+crimeData$prbconv <- ifelse(crimeData$prbconv>1,1,crimeData$prbconv)
+crimeData$prbarr <- ifelse(crimeData$prbarr>1,1,crimeData$prbarr)
+summary(crimeData$prbarr)
+summary(crimeData$prbconv)
+summary(crimeData$prbpris)
+```
+
+```{r}
+#summary(crimeData)
+str(crimeData)
+```
+
+## Analysis of Key variables
+
+###crmrte
+```{r}
+hist(crimeData$crmrte, breaks=20,xlim=range(0.0,.1) ,main = "Crimes committed per person")
+```
+
+Large chunk of counties have crime rate less than 4%. Nothing suspicious in here.
+
+###prbarr
+```{r}
+hist(crimeData$prbarr,main = "Probability of arrest", breaks = 20, xlim=range(0,1))
+```
+
+Majority of counties have probability of arrest less than 50% with couple of outliers at 70 and 100%. These two look interesting and should be further probed.
+Similarly counties with very low rate of arrest (<10%) should also be probed further.
+
+
+###prbconv
+```{r}
+hist(crimeData$prbconv,main = "Probability of conviction", breaks = 20, xlim=range(0,1))
+```
+
+Again here we have couple of outliers with very high conviction rate(90 and 100%). This should be looked into. Similarly on lower end we have 3 counties with less than 20% conviction rate which again should be looked into.
+
+###prbpris
+```{r}
+hist(crimeData$prbpris,main = "Probability of Prison Sentence", breaks = 20, xlim=range(0,1))
+```
+
+There is one county with less than 20% probability of sentence. This should be looked into for further investigation.
+There are couple of counties with more than 50% prison sentence. May be we can have alook for further probe.
+
+###avgsen
+```{r}
+hist(crimeData$avgsen,main = "Average Sentence (Days)", breaks=20, xlim=range(5,21))
+```
+
+There is one outlier with 20 days of average sentence, much higher than rest of the counties.
+
+###polpc
+```{r}
+hist(crimeData$polpc,main = "Police per capita")
+```
+
+There are few counties with less than 0.001 Police per capita. This is alarming and should be checked in conjuction with other variables like crime rate, density etc.
+
+###density
+```{r}
+hist(crimeData$density,main = "Density of population (per sq. mile)", xlim=range(0,9), breaks=20)
+```
+
+Outliers with very high population density should be checked against other key variables like polic eper capita and crime rate.
+
+###taxpc
+```{r}
+hist(crimeData$taxpc,main = "Tax revenue per capita", xlim=range(20,120), breaks=20)
+```
+
+There is one outlier county with very high tax revenue per capita. It will be interesting to see crime details for this county.
+
+###pctymle
+```{r}
+hist(crimeData$pctymle,main = "% Young male", breaks=20, xlim=range(.05,.25))
+```
+
+There is one outlier with almost 25% young male population. It will be interesting to see the effect on wages and crime rate.
+
+
+###pctmin80
+```{r}
+hist(crimeData$pctmin80,main = "% Minority", breaks=33, xlim=range(0,70))
+```
+
+Counties with more than 50% monirity and less than 5% minority can be scrutinized further wrt wages and crime variables to see if there is any relation.
+
+
+## Model 1
+```{r}
+pairs(crmrte~prbarr+prbconv+prbpris, data=crimeData)
+scatterplotMatrix(~crmrte+prbarr+prbconv+pctymle, data=crimeData)
+#We can clearly see the relation betwene probbaility of arrest and conviction on crime rate.
+# % of male population also affects crime rate but it appears independent on convition and arrest variables
+```
+
+## Model 2
+```{r}
+scatterplotMatrix(~crmrte+density|region, data=crimeData)
+#density increases the region is urban where more crime
 ```
