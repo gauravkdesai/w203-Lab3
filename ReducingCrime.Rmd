@@ -1,24 +1,306 @@
 ---
-title: "ReducingCrime"
+title: "<Draft> Lab3: Reducing Crime"
 subtitle: "w203 Lab3"
-author: "Harith Elrufai and Gaurav Desai"
-date: "3/17/2018"
+author: "Harith Elrufaie and Gaurav Desai"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# Exploratory Data Analysis
+Perform an exploratory analysis to understand the determinants of crime and to generate policy suggestions that are applicable to local government.
+
+## Setup
+First, we load the necessary libraries.
+```{r library}
+suppressMessages(library(stargazer))
+suppressMessages(library(corrplot))
+suppressMessages(library(dplyr))
+suppressMessages(library(car))
 ```
 
-```{r load crime data File}
+Then we load the dataset, which is in the same directory as this RMD.
+```{r data}
+# Load the data 
 rawCrimeData = read.csv("crime_v2.csv")
+str(rawCrimeData)
+```
+The dataset contains 25 columns (variables) and 97 rows
+
+## Data Quality/Clean-up
+
+### Remove NAs
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+sum(is.na(rawCrimeData$county))
+```
+The data set contains 6 rows with NA county. We need to remove these rows before proceeding further.
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+crimeData <- rawCrimeData[!is.na(rawCrimeData$county),]
+min(complete.cases(crimeData))
+```
+Since there are no more incomplete rows, we're good to go.
+
+### Convert county to factor
+Since county is not a measurement, we should convert it into factor so that it can be easily used for further analysis.
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+crimeData$county <- as.factor(crimeData$county)
+length(levels(crimeData$county))
+```
+This is interesting, we have 91 rows but only 90 levels.
+Eyeballing the data shows there are two identical rows for county 193, same can be varifired using duplicated function.
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+crimeData[duplicated(crimeData),"county"]
+```
+so lets delete the duplicate row
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+crimeData <- crimeData[!duplicated(crimeData),]
 ```
 
-```{r basic EDA of raw data}
-str(rawCrimeData) # 97 obs, 25 variables. This is odd, if i open file in excel i see 92 rows with headers so thats 91 obs
-summary(rawCrimeData)
+### Convert prbconv to number
+Now lets convert prbconv from factor to number because it is a probability value.
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+crimeData$prbconv <- as.numeric(levels(crimeData$prbconv))[crimeData$prbconv]
+summary(crimeData$prbconv)
 ```
-```{r data cleanup}
-#convert county to facor may be?
-#check for Na in any of the variables
+
+### Ceil probabilities to 1 to fit them in valid probability range
+Now lets see if any of the probability is crossing 0 to 1 range
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+filter(crimeData, prbarr< 0 | prbarr>1 | 
+         prbconv < 0 | prbconv > 1 | 
+         prbpris < 0 | prbpris > 1) [,c("county", "prbarr", "prbconv", "prbpris")]
 ```
+We have 10 counties where prbconv is greater than 1 which means there are more convictions than arrests.
+Out of these 10 counties, one county (115) also has prbarr greater than 1 indicating more arrests than offences.
+We have two ways to clean this data, either we remove these 10 counties or we cap the max probabilities at 1.
+For this analysis we take second approach of capping the probabilities at 1.
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+crimeData$prbconv <- ifelse(crimeData$prbconv>1,1,crimeData$prbconv)
+crimeData$prbarr <- ifelse(crimeData$prbarr>1,1,crimeData$prbarr)
+summary(crimeData$prbarr)
+summary(crimeData$prbconv)
+summary(crimeData$prbpris)
+```
+
+## Univariate Variable Analysis of Key Variables
+
+### crmrte: crimes committed per person
+Looking at the histogram of crime per person, the distribution appears to be positively skewed. Applying `log()` on crime shows the histogram to appear normally distributed.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$crmrte, breaks=20, main = "Histogram of Crimes Committed"
+     , cex.main=0.8, xlab="CrimeRate")
+hist(log(crimeData$crmrte), breaks=20, main = "Histogram of Log of Crimes Committed"
+     , cex.main=0.8, xlab="Log of CrimeRate")
+```
+
+### prbarr: probability of arrest
+Looking at the histogram of arrest per person, the distribution appears to be positively skewed. Applying `log()` shows the histogram to appear *less* normally distributed.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$prbarr, breaks=20, main = "Histogram of Probability of Arrest"
+     , cex.main=0.8, xlab="Probability of Arrest")
+hist(log(crimeData$prbarr), breaks=20, main = "Histogram of Log of Probability of Arrest Log"
+     , cex.main=0.8, xlab="Log of Probability of Arrest")
+```
+
+### prbconv: probability of conviction
+Looking at the histogram of probability of conviction, the distribution appears to be positively skewed. Applying `log()` shows the histogram to appear normally distributed.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$prbconv, breaks=20, main = "Histogram of Probability of Conviction"
+     , cex.main=0.8, xlab="Probability of Conviction")
+hist(log(crimeData$prbconv), breaks=20, main = "Histogram Log Probability of Conviction"
+     , cex.main=0.8, xlab="Log of Probability of Conviction")
+```
+
+### prbpris: probability of prison sentence
+Looking at the histogram of probability of sentence, the distribution appears to be relatively normal. Applying `log()` shows the histogram to appear *less* normally distributed.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$prbpris, breaks=20, main = "Histogram of Probability of Sentence"
+     , cex.main=0.8, xlab="Probability of Sentence")
+hist(log(crimeData$prbpris), breaks=20, main = "Histogram of Log Probability of Sentence"
+     , cex.main=0.8, xlab="Log Probability of Sentence")
+```
+
+### density: people per sq. mile
+Looking at the histogram of probability of sentence, the distribution appears to be positively skewed. Applying `log()` shows the histogram to appear *more* normally distributed, with one outlier.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$density, breaks=20, main = "Histogram of People per sq. mile"
+     , cex.main=0.8, xlab="Density")
+hist(log(crimeData$density), breaks=20, main = "Histogram of Log People per sq. mile"
+     , cex.main=0.8, xlab="Log of Density")
+```
+
+### taxpc: tax revenue per capita
+Looking at the histogram of probability of sentence, the distribution appears to be positively skewed. Applying `log()` shows the histogram to appear slightly positevely skewed.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$taxpc, breaks=20, main = "Histogram of Tax revenue per capita"
+     , cex.main=0.8, xlab="Tax revenue per capta")
+hist(log(crimeData$taxpc), breaks=20, main = "Histogram of Log Tax revenue per capita"
+     , cex.main=0.8, xlab="Log of Tax revenue per capta")
+```
+
+### pctmin80: perc. minority, 1980
+Looking at the histogram of probability of sentence, the distribution appears to be slightly positively skewed. Applying `log()` shows the histogram to appear negatively skewed.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$pctmin80, breaks=20, main = "Histogram of % minority", xlab = "")
+hist(log(crimeData$pctmin80), breaks=20, main = "Histogram of Log % minority", xlab = "")
+```
+
+### mix: offense mix: face-to-face/other
+Looking at the histogram, the distribution appeara to be slighly positively skewed. Applying `log()` shows the histogram to appear normally distributed.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$mix, breaks=20, main = "Face-to-face/other"
+     , cex.main=.8, xlab = "")
+hist(log(crimeData$mix), breaks=20, main = "Face-to-face/other"
+     , cex.main=.8, xlab = "")
+```
+
+### pctymle: percent young male
+Looking at the histogram, the distribution appears to be positively skewed. Applying `log()` shows the histogram to appear positvely skewed with one outlier.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$pctymle, breaks=20, main = "Percent Young Male"
+     , cex.main=.8, xlab = "")
+hist(log(crimeData$pctymle), breaks=20, main = "Log Percent Young Male"
+     , cex.main=.8, xlab = "")
+```
+
+## Analysis of Key Relationships
+It is very imperative to realize the relationship between crime rate and all the data available to us. We'll use `corrplot` to make the exploration of key relationships clearer.
+```{r}
+corrplot(cor(crimeData[ , (names(crimeData) %in% 
+                             c("crmrte", "prbarr", "prbconv", "prbpris", "avgsen"
+                               , "polpc", "density", "taxpc", "west", "central"
+                               , "uraban", "pctmin80", "wcon", "wtuc", "wtrd"
+                               , "wfir", "wser", "wmfg", "wfed", "wsta", "wloc"
+                               , "mix", "pctymle"))])
+         , method="circle", type="upper"
+         , tl.col="Black", bg="Black")
+```
+
+The above plot indicates the following *positive* relationships with crime rate:
+\begin{enumerate}
+  \item Density (density).
+  \item Tax revenue per capita (taxpc).
+  \item All wage varibles.
+  \item Young Male (pctymle)
+\end{enumerate}
+
+The above plot also indicates the following *negative* relationships with crime rate:
+\begin{enumerate}
+  \item Probabiliy of Arrest (prbarr)
+  \item Probablity of Conviction (prbconv)
+  \item West region of NC (west)
+\end{enumerate}
+
+### Crimes Committed per person (crmrte) & People per sq. (density)
+As you can see from the correlation plot below, there is a positive linear relationship between crime rate and density.
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(log(crimeData$density), log(crimeData$crmrte), 
+    main="Crime Density vs Crime Rate", 
+    xlab="Log Density",
+    ylab="Crimes Committed", cex.main=0.8)
+abline(lm(log(crimeData$crmrte) ~ log(crimeData$density)))
+cor(crimeData$crmrte, crimeData$density)
+```
+
+### Crimes Committed per person (crmrte) & Tax revenue per capita (taxpc)
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(log(crimeData$taxpc), log(crimeData$crmrte), 
+    main="Tax revenue per capita vs Crime Rate", 
+    xlab="Tax revenue per capita",
+    ylab="Crimes Committed", cex.main=0.8)
+abline(lm(log(crimeData$crmrte) ~ log(crimeData$taxpc)))
+cor(crimeData$crmrte, crimeData$taxpc)
+```
+
+### Crimes Committed per person (crmrte) & Probabiliy of Arrest (prbarr)
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(log(crimeData$prbarr), log(crimeData$crmrte), 
+    main="Probabiliy of Arrest vs Crime Rate", 
+    xlab="Probabiliy of Arrest",
+    ylab="Crimes Committed", cex.main=0.8)
+abline(lm(log(crimeData$crmrte) ~ log(crimeData$prbarr)))
+cor(crimeData$crmrte, crimeData$prbarr)
+```
+
+### Crimes Committed per person (crmrte) & Tax revenue per capita (prbconv)
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(log(crimeData$prbconv), log(crimeData$crmrte), 
+    main="Probablity of Conviction vs Crime Rate", 
+    xlab="Probablity of Conviction",
+    ylab="Crimes Committed", cex.main=0.8)
+abline(lm(log(crimeData$crmrte) ~ log(crimeData$prbconv)))
+cor(crimeData$crmrte, crimeData$prbconv)
+```
+
+# Proposed Models
+
+## Model 1: with only the explanatory variables
+Using a combination of key positive and negative attributes to crime rate, we're recommending the following model:
+
+$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(prbarr) + \\
+\beta_3 \cdot log(prbconv) + \beta_4 \cdot log(pctymle)$$
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+model1 <- lm(log(crmrte) ~ log(density) + log(prbarr) + log(prbconv) 
+             + log(pctymle), data=crimeData)
+summary(model1)
+plot(model1)
+```
+
+## Model 2: with key explanatory variables and only covariates
+In this model, we'll include the variables (avgsen, mix, taxpc), as we think they will contribute to the accuracy of your results without introducing substantial bias.
+
+$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(prbarr) + \\
+\beta_3 \cdot log(prbconv) + \beta_4 \cdot log(pctymle) + \beta_5 \cdot log(avgsen) + \beta_6 \cot log(mix) + \\
++ \beta_7 \cdot log(taxpc)$$
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+model2 <- lm(log(crmrte) ~ log(density) + log(prbarr) + log(prbconv) 
+             + log(pctymle) + log(avgsen) + log(mix) + log(taxpc), data=crimeData)
+summary(model2)
+plot(model2)
+```
+
+## Model 3: includes the previous covariates, and most, if not all, other covariates
+In this model, we'll include all the data available to us to demonstrate the robustness of results to model specification. 
+
+$$crimeDeterm = \beta_0 + \beta_1 \cdot log(density) + \beta_2 \cdot log(prbarr) + \\
+\beta_3 \cdot log(prbconv) + \beta_4 \cdot log(pctymle) + \beta_5 \cdot log(avgsen) + \beta_6 \cdot log(mix) + \\
+\beta_7 \cdot log(taxpc) +\\
+\beta_8 \cdot log(prbpris) + \beta_9 \cdot log(polpc) + \beta_{10} \cdot log(pctmin80) + \beta_{11} \cdot log(wcon)  \\
++ \beta_{12} \cdot log(wtrd) + \beta_{13} \cdot wfir + \beta_{14} \cdot log(wser) + \beta_{15} \cdot log(wmfg)  \\ 
++ \beta_{16} \cdot log(wfed) + \beta_{17} \cdot log(wsta) + \beta_{18} \cdot wloc$$
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+model3 <- lm(log(crmrte) ~ log(density) + log(prbarr) + log(prbconv) 
+             + log(pctymle) + log(avgsen) + log(mix) + + log(taxpc) 
+             + log(prbpris) + log(polpc) 
+             + log(pctmin80) + log(wcon) + log(wtrd) + wfir + log(wser) + log(wmfg)
+             + log(wfed) + log(wsta) + wloc, data=crimeData)
+summary(model3)
+plot(model3)
+```
+
+## All 3 Regression models at a glance
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'} 
+stargazer(model1, model2, model3, type = "text", title="Comparison of 3 Regression models", float=FALSE)
+```
+
+## Omitted Variables
+We believe that following omitted variables may contribute towards crime rate regression results.
+
+1. Literacy: Higher the literacy, crime rate should go down. In general terms as literacy increases, it is easier for people to find jobs, which deters them from conducting crimes. 
+
+2. Poverty: If per capita income is not distributed equally then there is high chance of crimes in that area. Tax per capita tries to proxy this variable but it does not capture the high to low distribution of income. If per capita income has huge variance from mean then crime rate should go up. Different wages provided in the data may act as proxy as they cover most of the wage range except may be farming and other self-employed people.
+
+3. Corruption: Higher the corruption, more the crime rate in the area. More corruption generally disrupts employment and effectively pushes people into criminal activity.
+
+4. Historic criminal rate of the area: If previous generation had high criminal rate in a particular area then new generation would grow in that area and continue following same foot steps. So we should also measure this continuity effect. It is much easier for new people to turn to criminals where there are already plenty of established criminals than areas where crime is low.
+
+
+
+# Conclusion
+Our Regression Model (Model 1) indicates that as population density increases and the young male percentage increases, the crime rate grows. So policymakers need to pay attention to more urbanized or highly dense regions with a high male ratio. Also, steps should be taken to improve gender by diversifying the community, for instance bringing more women and men of different age groups, which potentially can bring down crime rate.
+
+More important aspect is the effect of stong arrest and conviction ratio on the crime rate. Having strong and capable police has a noticeable deterrent effect on crime rate. Therefore, policymakers should concentrate on strengthening the police and judiciary system and deter people from committing crimes by setting strong examples of arrests and convictions.
