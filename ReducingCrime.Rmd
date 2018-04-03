@@ -290,7 +290,7 @@ stargazer(model1, model2, model3, type = "text", title="Comparison of 3 Regressi
 ## Omitted Variables
 We believe that following omitted variables may contribute towards crime rate regression results.
 
-1. Literacy: Higher the literacy crime rate should go down. In general terms as literacy increases, it is easier for people to find jobs, which deters them from conducting crimes. 
+1. Literacy: Higher the literacy, crime rate should go down. In general terms as literacy increases, it is easier for people to find jobs, which deters them from conducting crimes. 
 
 2. Poverty: If per capita income is not distributed equally then there is high chance of crimes in that area. Tax per capita tries to proxy this variable but it does not capture the high to low distribution of income. If per capita income has huge variance from mean then crime rate should go up. Different wages provided in the data may act as proxy as they cover most of the wage range except may be farming and other self-employed people.
 
@@ -301,6 +301,6 @@ We believe that following omitted variables may contribute towards crime rate re
 
 
 # Conclusion
-Our Regression Model (Model 1) indicates that as Population density increases and the young male percentage increases in the population the crime rate grows. So Policy makers need to pay attention to more urbanized or highly dense regions with high male ratio. Also steps should be taken to improve gender by increasing woman population, which potentially can bring down Crime Rate
+Our Regression Model (Model 1) indicates that as population density increases and the young male percentage increases, the crime rate grows. So policymakers need to pay attention to more urbanized or highly dense regions with a high male ratio. Also, steps should be taken to improve gender by diversifying the community, for instance bringing more women and men of different age groups, which potentially can bring down crime rate.
 
-More important aspect is effect of strong Arrest and Conviction ratio on crime rate. Having string and effective police has noticeable deterrent effect on crime rate. So policy makers should concentrate on strengthening the Police and Judiciary system and deter people from committing crimes by setting strong examples of arrests and convictions.
+More important aspect is the effect of stong arrest and conviction ratio on the crime rate. Having strong and capable police has a noticeable deterrent effect on crime rate. Therefore, policymakers should concentrate on strengthening the police and judiciary system and deter people from committing crimes by setting strong examples of arrests and convictions.
