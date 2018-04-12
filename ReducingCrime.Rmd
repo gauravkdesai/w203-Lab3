@@ -69,13 +69,13 @@ Now, we'll conduct an Exploratory Data Analysis of the given dataset. This proce
 
 ## Univariate Analysis
 ###crmrte: crimes committed per person
-This is outcome variable for our regresison model where we will try and derive relation between various independent variables and crime rate.
+This is outcome variable for our regression model where we will try and derive relation between various independent variables and crime rate.
 Looking at the quantiles of crmrte we can see large difference between 3rd quantile and max. So there are few outliers counties with very high crime rates than rest. Same is evident from histogram.
 To take care of outliers and fit the variable into normal distribution, lets take a log of crime rate.
 But we note that these are crimes rates per person and all the values are between 0 and 1. This range is not suitable for logarithms. 
 So lets change the scale by creating new variable for crime rate per 1000 people (crmrtepk) and then lets take log(log_crmrtepk). The new variable is log_crmrtepk which shows nice normal distribution. Going forward whenever we talk about crime rate, we will use log_crmrtepk (log of crmrt per k) 
 
-Also we not the righ most outlier, county=119 has crime rate of 98 for every 1000 people, that is 1 crime per every 10 people which is very high. Population Density also is highest among all counties. More information is required to understand what is so different about this county so that appropriate remedial action can be suggested.
+Also we not the right most outlier, county=119 has crime rate of 98 for every 1000 people, that is 1 crime per every 10 people which is very high. Population Density also is highest among all counties. More information is required to understand what is so different about this county so that appropriate remedial action can be suggested.
 ```{r}
 summary(crimeData$crmrte)
 boxplot(crimeData$crmrte)
@@ -88,7 +88,7 @@ crimeData[crimeData$crmrtepk>90,c("county","crmrtepk", "density")]
 
 ## Also convert polpc from per capita to per 1000 people to keep the scale
 Since we have converted crimerate from per capita to per K people, lets also convert other per capita variable polpc to same scale. 
-While scaling we notice that for county 115 the police per 1000 people is highest at 9 while average is just 1.7. Noteably the second highest police per 1k is 4.5. Crime rate and density in this county is not high, but prbarr is highest at 1.09 and avgsen is highest at 20.7. Which means County 115 has highest police numbers which would logically translate into highest arrests. Though higher police numbers can not logcally explain highest average sentence in that county. We sould need more information about this county, may be there is a central jail for all of western counties of North Carolina which would explain highest police population and highest average sentences.
+While scaling we notice that for county 115 the police per 1000 people is highest at 9 while average is just 1.7. Notably the second highest police per 1k is 4.5. Crime rate and density in this county is not high, but prbarr is highest at 1.09 and avgsen is highest at 20.7. Which means County 115 has highest police numbers which would logically translate into highest arrests. Though higher police numbers can not logically explain highest average sentence in that county. We need more information about this county, may be there is a central jail for all of western counties of North Carolina which would explain highest police population and highest average sentences.
 
 ```{r}
 crimeData$log_polpk <- log(crimeData$polpc * 1000)
@@ -105,10 +105,10 @@ filter(crimeData, prbarr< 0 | prbarr>1 |
          prbpris < 0 | prbpris > 1) [,c("county", "prbarr", "prbconv", "prbpris")]
 ```
 
-We have 10 counties where prbconv is greater than 1, which means there are more convictions than arrests. Infact there is one county=185 which has more than 2 convictions per arrest. Out of these 10 counties, one county (115) also has prbarr greater than 1 indicating more arrests than offences. We have talked about this county in detail while analysing polpc variable earlier.
+We have 10 counties where prbconv is greater than 1, which means there are more convictions than arrests. In fact there is one county=185 which has more than 2 convictions per arrest. Out of these 10 counties, one county (115) also has prbarr greater than 1 indicating more arrests than offences. We have talked about this county in detail while analyzing polpc variable earlier.
 
-Under normal curcomstances pribabilities should not cross 0 to 1 range, but in this case the probabilitis are mere proxies to actual police and judicioury data. One of the possible explanation to more convictions than arrest could be transfers of arrested people from base location to newar court locations within or outside of North Carolina.
-In absense of more details on these probabilities we keep the probabilities above 1 as it is and proceed further with our analysis
+Under normal circumstances probabilities should not cross 0 to 1 range, but in this case the probabilities are mere proxies to actual police and judiciary data. One of the possible explanation to more convictions than arrest could be transfers of arrested people from outside counties where they were arrested to court locations within county.
+In absence of more details on these probabilities we keep the probabilities above 1 as it is and proceed further with our analysis
 
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 data.probabilities <- cbind(crimeData$prbarr,crimeData$prbconv,crimeData$prbpris,deparse.level = 2)
@@ -119,10 +119,10 @@ Now lets look look in detail at outliers in these probabilities. Outlier in prba
 ```{r}
 crimeData[crimeData$prbconv>2,]
 ```
-We observe an interesting combination of extremes for County 185. It has highest Arrest to Conviction ratio of 2.1. At the same time least average sentense of 5.4 days. It has highest % of minority as of 1980 at 64%. And very high weekly wage in service industry at 2177. It is difficult to conclude by such extremes without knowing more about that county. But a best guess would be there are more convictions for small petit crimes for which there are no arrest, may be just community service or warnings. Hence conviction ration is very high while average sentence is lowest. 
+We observe an interesting combination of extremes for County 185. It has highest Arrest to Conviction ratio of 2.1. At the same time least average sentence of 5.4 days. It has highest % of minority as of 1980 at 64%. And very high weekly wage in service industry at 2177. It is difficult to conclude by such extremes without knowing more about that county. But a best guess would be there are more convictions for small petite crimes for which there are no arrest, may be just community service or warnings. Hence conviction ration is very high while average sentence is lowest. 
 
 ### avgsen : Average sentence (in days)
-avgsen shows normal distribution with couple of outliers on right. Out of top 3 counties with average sentence, we have already analysed county 115 while analysing polpc. The other two counties 41 and 127 have very high % of minority (42% and 34% respectively). It is difficult to draw conclusion as to why higher average sentence in these areas without any spike in crime rate. Concerned authorities should imvestigate this further.
+avgsen shows normal distribution with couple of outliers on right. Out of top 3 counties with average sentence, we have already analysed county 115 while analyzing polpc. The other two counties 41 and 127 have very high % of minority (42% and 34% respectively). It is difficult to draw conclusion as to why higher average sentence in these areas without any spike in crime rate. Concerned authorities should investigate this further.
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 summary(crimeData$avgsen)
 hist(crimeData$avgsen, breaks=20, main = "Histogram of avgsen"
@@ -155,13 +155,13 @@ crimeData[crimeData$taxpc>100,]
 ```
 
 ### pctmin80: perc. minority, 1980
-Looking at the histogram of % of minority as of 1980, it is equally distributed. There are no suprises or any outliers that interests us.
+Looking at the histogram of % of minority as of 1980, it is equally distributed. There are no surprises or any outliers that interests us.
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 hist(crimeData$pctmin80, breaks=20, main = "Histogram of % minority", xlab = "")
 ```
 
 ### mix: offense mix: face-to-face/other
-Looking at the histogram, the distribution appears to be slightly positively skewed with few outliers. But otherwise this is fairly normallly distributed. Looking at the top 2 counties for mix are located in the western region. Difficult to draw any conclusion based on this but something for authorities to look into. 
+Looking at the histogram, the distribution appears to be slightly positively skewed with few outliers. But otherwise this is fairly normally distributed. Looking at the top 2 counties for mix are located in the western region. Difficult to draw any conclusion based on this but something for authorities to look into. 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 hist(crimeData$mix, breaks=20, main = "Face-to-face/other"
      , cex.main=.8, xlab = "")
@@ -170,7 +170,7 @@ crimeData[crimeData$mix>.4,c("county", "west", "central", "urban", "mix")]
 ```
 
 ### pctymle: percent young male
-Looking at the histogram, the distribution appears to be positively skewed with a long tail and one distant outlier. 24% young male population might indicate a large manufacturing industry or some sort of labour intesive work setup in this county though manufacturing or any other wage does nto support this deduction. In absense of any other evidence we will keep this outlier without any modification.
+Looking at the histogram, the distribution appears to be positively skewed with a long tail and one distant outlier. 24% young male population might indicate a large manufacturing industry or some sort of labor intensive work setup in this county though manufacturing or any other wage does not support this deduction. In absence of any other evidence we will keep this outlier without any modification.
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 summary(crimeData$pctymle)
 crimeData[crimeData$pctymle>.2,]
@@ -182,10 +182,10 @@ hist(log(crimeData$pctymle), breaks=20, main = "Log Percent Young Male"
 
 ### wages
 Now lets look at all wages together. We will also calculate average wage across all wage categories.
-Overall all wages look well distributed with some spikes in each othe wages.Total wage is almost perfectly normally distributed.
-The red line represents average for each of the category. Inrerestingly retal has least of the wages and fed has the higes wage.
+Overall all wages look well distributed.Total wage is almost perfectly normally distributed.
+The red line represents average for each of the category. Interestingly retail has least of the wages and fed has the highest wage.
 
-Since we don't find significant differnec in any of the wages, going forward we will use wtotal as proxy for various wages to see effect of wage on crime..
+Since we don't find significant difference in any of the wages, going forward we will use wtotal as proxy for various wages to see effect of wage on crime..
 
 ```{r}
 crimeData$wtotal<-crimeData$wcon+crimeData$wtuc+crimeData$wtrd
@@ -219,17 +219,17 @@ corrplot.mixed(cor(crimeData[ , (names(crimeData) %in%
 ```
 We can see *strong positive* correlation (>.25) between 
 
-1.crime rate (log_crmrtepk) and population density (density), total wages (wtotal) and taxes (log_taxpk). Which is logical in the sense that as population densty increases, wages and taxes would go up and so would the crimes rate in that area will increase. Note that Density itself is correlated with total wages and taxes, so we can take only one of these variables in our model to avoid multi colinearity.
+1.crime rate (log_crmrtepk) and population density (density), total wages (wtotal) and taxes (log_taxpk). Which is logical in the sense that as population density increases, wages and taxes would go up and so would the crimes rate in that area will increase. Note that Density itself is correlated with total wages and taxes, so we can take only one of these variables in our model to avoid multi co-linearity.
 
 2. crime rate (log_crmrtepk) and % of male population (pctymle). Historically it has been observed that men are involved in crime more than woman. So this relation makes logical sense. As male population increases there is higher number of criminal activity and hence more crime rate in that area.
 
 
-On the opposite side, we can see *strong negative* correlation (<.25) between crime rate (log_crmrtepk) and probability of arrest (prbarr) and probability of conviction (prbconv). And the two probabilities are not corelated with each other. So we can use both of these in our regression model.
+On the opposite side, we can see *strong negative* correlation (<.25) between crime rate (log_crmrtepk) and probability of arrest (prbarr) and probability of conviction (prbconv). And the two probabilities are not correlated with each other. So we can use both of these in our regression model.
 
 Apart from these strong correlations, we also have *weak positive* correlation between crime rate and % of minority (pctmin80). The relation is not so strong and hence we need not include in our primary model.
 
 Apart from effect on crime rate, there are some other interesting relations that can be seen here.
-Number of police per capita (log_polpk) increases as taxes (log_taxpk) and population density increases. And as police force strenthens the Average sentence (avgsen) goes up. May be the additional police force catches serious criminals who get longer duration sentences.
+Number of police per capita (log_polpk) increases as taxes (log_taxpk) and population density increases. And as police force strengthens the Average sentence (avgsen) goes up. May be the additional police force catches serious criminals who get longer duration sentences.
 
 There is another interesting trio of relationships. As mix of face to face crimes go up the probability of arrest goes up but probability of conviction goes down. Logical explanation of this situation would be since there are more face to face crimes, it is easier to identify the person involved and hence more and may be faster arrests. But these extra arrest do not translate to convictions and hence they drag down the conviction rate.
 
@@ -286,7 +286,7 @@ plot(model3)
 stargazer(model1, model2, model3, type = "text", title="Comparison of 3 Regression models", float=FALSE, header = FALSE, report = "pvct*")
 ```
 
-Note that density coefficient drastically changes in model 3 because variables like wtotal and log_polpk distribute are synonimous to increase in density and they absorb some of the causality of density.
+Note that density coefficient drastically changes in model 3 because variables like wtotal and log_polpk distribute are synonymous to increase in density and they absorb some of the causality of density.
 
 TODO: Talk about Q-Q plot and fitment and slight distortion due to outliers.
 
