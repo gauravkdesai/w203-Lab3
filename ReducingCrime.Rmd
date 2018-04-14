@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 #Introduction
-We have been tasked to help shape up a political campaign in North Carolina. We are equipped with "Crime Statistics" data of year 1987 for selected counties in North Carolina and our task is to decipher this data and understand various factors that could affect the crime rate and make statistics backed suggestions applicable to local government to improve the Crime rate in North Carolina. 
+We have been tasked to help shape up a political campaign in North Carolina. We are equipped with "Crime Statistics" data of year 1987 for selected counties in North Carolina. Our task is to decipher this data and understand various factors that could affect the crime rate and make statistics backed suggestions applicable to local government to improve the Crime rate in North Carolina. 
 
 
 ## Setup
@@ -22,15 +22,13 @@ suppressMessages(library(ggplot2))
 ```{r data}
 rawCrimeData = read.csv("crime_v2.csv")
 dim(rawCrimeData)
-#summary(rawCrimeData)
-#str(rawCrimeData)
 ```
 The dataset contains **25** variables and **97** observations. Now lets see if there are any bad data that needs to be cleaned up.
 
 ## Data Quality/Clean-up
 
 ### Convert county to factor
-Since county is not a measurement, it won't make sense to roll it up for aggregation or do any mathematical operation (like taking average) on it. Hence lets convert it into factor.
+Since county is not a measurement, it won't make sense to roll it up for aggregation or do any mathematical operation, therefore we'll convert it into factor.
 
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 rawCrimeData$county <- as.factor(rawCrimeData$county)
@@ -38,7 +36,7 @@ length(levels(rawCrimeData$county))
 sum(is.na(rawCrimeData$county))
 ```
 
-Interestingly we have 91 non NA rows but only 90 levels. Eyeballing the data shows there are two identical rows for county 193, same can be verified using duplicated function. Lets drop the duplicate row.
+Interestingly, we have 91 non NA rows but only 90 levels. Eyeballing the data shows there are two identical rows for county 193, same can be verified using duplicated function. Lets drop the duplicate row.
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 rawCrimeData[duplicated(rawCrimeData[!is.na(rawCrimeData$county),]), c("county","crmrte")]
 #so lets delete the duplicate row
@@ -47,7 +45,7 @@ nrow(rawCrimeData) #after removal of duplicate we are left with 96 observations.
 ```
 
 ### Convert prbconv to number
-Now lets convert prbconv from factor to number because it is a ratio of convictions to arrest so it is actual measurement and should be stored as number for aggregations and other mathematical operations.
+Now lets convert prbconv from factor to number because it is a *ratio* of convictions to arrest, so it is actual measurement and should be analyzed as number for aggregations and other mathematical operations.
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 rawCrimeData$prbconv <- as.numeric(levels(rawCrimeData$prbconv))[rawCrimeData$prbconv]
 summary(rawCrimeData$prbconv)
@@ -64,33 +62,42 @@ crimeData <- rawCrimeData[!is.na(rawCrimeData$county),]
 min(complete.cases(crimeData))
 ```
 
-# EDA
+# Exploratory Data Analysis
 Now, we'll conduct an Exploratory Data Analysis of the given dataset. This process will help us gain a solid understanding of our variables, which will eventually be essential to choose right variable combinations for our regression model.
 
 ## Univariate Analysis
 ###crmrte: crimes committed per person
-This is outcome variable for our regression model where we will try and derive relation between various independent variables and crime rate.
-Looking at the quantiles of crmrte we can see large difference between 3rd quantile and max. So there are few outliers counties with very high crime rates than rest. Same is evident from histogram.
-To take care of outliers and fit the variable into normal distribution, lets take a log of crime rate.
-But we note that these are crimes rates per person and all the values are between 0 and 1. This range is not suitable for logarithms. 
-So lets change the scale by creating new variable for crime rate per 1000 people (crmrtepk) and then lets take log(log_crmrtepk). The new variable is log_crmrtepk which shows nice normal distribution. Going forward whenever we talk about crime rate, we will use log_crmrtepk (log of crmrt per k) 
+This is outcome variable for our regression model where we will try and derive relationships between various independent variables and crime rate.
 
-Also we not the right most outlier, county=119 has crime rate of 98 for every 1000 people, that is 1 crime per every 10 people which is very high. Population Density also is highest among all counties. More information is required to understand what is so different about this county so that appropriate remedial action can be suggested.
-```{r}
-summary(crimeData$crmrte)
-boxplot(crimeData$crmrte)
-hist(crimeData$crmrte)
-crimeData$crmrtepk <- crimeData$crmrte * 1000
-crimeData$log_crmrtepk <- log(crimeData$crmrtepk)
-hist(crimeData$log_crmrtepk)
-crimeData[crimeData$crmrtepk>90,c("county","crmrtepk", "density")]
+Looking at the quarantines of crmrte we can see large difference between 3rd quantile and max. So there are few outliers counties with very high crime rates than rest. This is also evident from histogram.
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+hist(crimeData$crmrte, breaks=20, main = "Histogram of crmrte"
+     , cex.main=0.8, xlab="crmrte")
 ```
 
-## Also convert polpc from per capita to per 1000 people to keep the scale
+To take care of outliers and fit the variable into normal distribution, we can easily take a log of crime rate. However, we observed that the values of crimes rates per person are between 0 and 1. This range is not suitable for logarithms. 
+Instead, we decided to scale by creating new variable for crime rate per 1000 people (crmrtepk) and then lets take `log(log_crmrtepk)`. The new variable is log_crmrtepk which shows nice normal distribution. Going forward whenever we talk about crime rate, we will use log_crmrtepk (log of crmrt per k) 
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+summary(crimeData$crmrte)
+crimeData$crmrtepk <- crimeData$crmrte * 1000
+crimeData$log_crmrtepk <- log(crimeData$crmrtepk)
+hist(crimeData$log_crmrtepk, breaks=20, main = "Histogram of crmrtepk"
+     , cex.main=0.8, xlab="crmrtepk")
+```
+
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+crimeData[crimeData$crmrtepk>90, c("county","crmrtepk", "density")]
+```
+
+Also we noticed the right most outlier, county=119 has crime rate of 98 for every 1000 people, that is 1 crime per every 10 people which is very high. Population Density also is highest among all counties. More information is required to understand what is so different about this county so that appropriate remedial action can be suggested.
+
+## Convert polpc from per capita to per 1000 people to keep the scale
 Since we have converted crimerate from per capita to per K people, lets also convert other per capita variable polpc to same scale. 
 While scaling we notice that for county 115 the police per 1000 people is highest at 9 while average is just 1.7. Notably the second highest police per 1k is 4.5. Crime rate and density in this county is not high, but prbarr is highest at 1.09 and avgsen is highest at 20.7. Which means County 115 has highest police numbers which would logically translate into highest arrests. Though higher police numbers can not logically explain highest average sentence in that county. We need more information about this county, may be there is a central jail for all of western counties of North Carolina which would explain highest police population and highest average sentences.
 
-```{r}
+```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 crimeData$log_polpk <- log(crimeData$polpc * 1000)
 hist(crimeData$log_polpk, breaks=20)
 summary(crimeData$polpk)
@@ -131,7 +138,7 @@ crimeData[crimeData$avgsen>15,c("county","avgsen","pctmin80", "crmrtepk")]
 ```
 
 ### density: people per sq. mile
-Density distribution is skewed with high concentration between .5 to 1.5 people per sq. mile. But there are ouliers at both end. Lets look at them. 
+Density distribution is skewed with high concentration between .5 to 1.5 people per sq. mile. But there are outliers at both end. Lets look at them. 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 summary(crimeData$density)
 crimeData[crimeData$density<.3 | crimeData$density>7,]
@@ -209,57 +216,55 @@ ggplot(wages, aes(x=wage)) + geom_histogram(bins=40, color="white") +
 
 ## Analysis of Key Relationships
 It is very imperative to realize the relationship between crime rate and all the data available to us. We'll use `corrplot` to make the exploration of key relationships clearer.
-```{r}
+```{r  fig.align='center', fig.height=8, fig.width=8, fig.show='hold'}
 corrplot.mixed(cor(crimeData[ , (names(crimeData) %in% 
                              c("log_crmrtepk", "prbarr", "prbconv", "prbpris", "avgsen"
                                , "log_polpk", "density", "log_taxpk", "pctmin80", "wtotal"
-                               , "mix", "pctymle"))])
-               ,tl.pos = "lt", tl.col="black", order="hclust", number.cex=.7, number.digits=2
-               )
+                               , "mix", "pctymle"))]),
+               tl.pos = "lt", tl.col="black", order="hclust", number.cex=.9, number.digits=2)
 ```
+
 We can see *strong positive* correlation (>.25) between 
 
-1.crime rate (log_crmrtepk) and population density (density), total wages (wtotal) and taxes (log_taxpk). Which is logical in the sense that as population density increases, wages and taxes would go up and so would the crimes rate in that area will increase. Note that Density itself is correlated with total wages and taxes, so we can take only one of these variables in our model to avoid multi co-linearity.
+1. crime rate (log_crmrtepk) and population density (density), total wages (wtotal) and taxes (log_taxpk). Which is logical in the sense that as population density increases, wages and taxes would go up and so would the crimes rate in that area will increase. Note that Density itself is correlated with total wages and taxes, so we can take only one of these variables in our model to avoid multi co-linearity.
 
 2. crime rate (log_crmrtepk) and % of male population (pctymle). Historically it has been observed that men are involved in crime more than woman. So this relation makes logical sense. As male population increases there is higher number of criminal activity and hence more crime rate in that area.
 
 
-On the opposite side, we can see *strong negative* correlation (<.25) between crime rate (log_crmrtepk) and probability of arrest (prbarr) and probability of conviction (prbconv). And the two probabilities are not correlated with each other. So we can use both of these in our regression model.
+On the opposite side, we can see *strong negative* correlation (<.25) between crime rate (log_crmrtepk) and probability of arrest (prbarr) and probability of conviction (prbconv). And the two probabilities are not correlated with each other.
 
 Apart from these strong correlations, we also have *weak positive* correlation between crime rate and % of minority (pctmin80). The relation is not so strong and hence we need not include in our primary model.
 
-Apart from effect on crime rate, there are some other interesting relations that can be seen here.
-Number of police per capita (log_polpk) increases as taxes (log_taxpk) and population density increases. And as police force strengthens the Average sentence (avgsen) goes up. May be the additional police force catches serious criminals who get longer duration sentences.
+Apart from effect on crime rate, there are some other interesting relations that can be seen here. For instance, the number of police per capita (log_polpk) increases as taxes (log_taxpk) and population density increases. And, as police force strengthens the Average sentence (avgsen) goes up. Maybe the additional police force catches serious criminals who get longer duration sentences?
 
-There is another interesting trio of relationships. As mix of face to face crimes go up the probability of arrest goes up but probability of conviction goes down. Logical explanation of this situation would be since there are more face to face crimes, it is easier to identify the person involved and hence more and may be faster arrests. But these extra arrest do not translate to convictions and hence they drag down the conviction rate.
+There is another interesting trio of relationships. As mix of face to face crimes go up the probability of arrest goes up but probability of conviction goes down. Logical explanation of this situation would be since there are more face to face crimes, it is easier to identify the person involved and hence more and may be faster arrests, but these extra arrest do not translate to convictions and hence they drag down the conviction rate.
 
 # Proposed Models
 
 ## Model 1: with only the explanatory variables
-As observed during our EDA, Probability of Arrest (prbarr), probability of Conviction (prbconv), Density (density) and % of male population (pctymle) show largest effect on Crime Rate (log_crmrtepk). Hence we're recommending the following model:
+As observed during our EDA, Probability of Arrest (prbarr), probability of Conviction (prbconv), Density (density) show largest effect on Crime Rate (log_crmrtepk). We will also include log_polpk, since it showed a weak positive correlation with crime rate. 
 
-$$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \\
-\beta_3 \cdot prbconv + \beta_4 \cdot pctymle$$
+Given that, we'rerecommending the following model:
+
+$$model1 = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot log_polpk$$
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-model1 <- lm(log_crmrtepk ~ density + prbarr + prbconv 
-             + pctymle, data=crimeData)
+model1 <- lm(log_crmrtepk ~ density + prbarr + prbconv + log_polpk, data=crimeData)
 summary(model1)
 plot(model1)
 ```
 
-TODO: Remove pctymle from model 1 as there is not significant impact (no 3 stars)
 
 ## Model 2: with key explanatory variables and only covariates
 In this model, we'll include the variables (avgsen, mix, pctmin80), as we think they will contribute to the accuracy of your results without introducing substantial bias.
 
 $$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \\
-\beta_3 \cdot prbconv + \beta_4 \cdot pctymle + \beta_5 \cdot avgsen + \beta_6 \cot mix + \\
+\beta_3 \cdot prbconv + \beta_4 \cdot log_polpk + \beta_5 \cdot avgsen + \beta_6 \cot mix + \\
 + \beta_7 \cdot pctmin80$$
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-model2 <- lm(log_crmrtepk ~ density + prbarr + prbconv 
-             + pctymle + avgsen + mix + pctmin80, data=crimeData)
+model2 <- lm(log_crmrtepk ~ density + prbarr + prbconv + log_polpk 
+             + avgsen + mix + pctmin80, data=crimeData)
 summary(model2)
 plot(model2)
 ```
@@ -285,6 +290,7 @@ plot(model3)
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'} 
 stargazer(model1, model2, model3, type = "text", title="Comparison of 3 Regression models", float=FALSE, header = FALSE, report = "pvct*")
 ```
+TODO: change stargazer type to latex
 
 Note that density coefficient drastically changes in model 3 because variables like wtotal and log_polpk distribute are synonymous to increase in density and they absorb some of the causality of density.
 
