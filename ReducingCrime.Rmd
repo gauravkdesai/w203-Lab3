@@ -44,7 +44,8 @@ sum(is.na(rawCrimeData$county))
 
 Interestingly, we have 91 non NA rows but only 90 levels. Eyeballing the data shows there are two identical rows for county 193, same can be verified using duplicated function. Lets drop the duplicate row.
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-rawCrimeData[duplicated(rawCrimeData[!is.na(rawCrimeData$county),]), c("county","crmrte")]
+rawCrimeData[duplicated(rawCrimeData[!is.na(rawCrimeData$county),])
+             , c("county","crmrte")]
 #so lets delete the duplicate row
 rawCrimeData <- rawCrimeData[!duplicated(rawCrimeData[!is.na(rawCrimeData$county),]),] 
 nrow(rawCrimeData) #after removal of duplicate we are left with 96 observations..
@@ -78,8 +79,8 @@ This is outcome variable for our regression model where we will try and derive r
 Looking at the quarantines of crmrte we can see large difference between 3rd quantile and max. So there are few outliers counties with very high crime rates than rest. This is also evident from histogram.
 
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-hist(crimeData$crmrte, breaks=20, main = "Histogram of crmrte"
-     , cex.main=0.8, xlab="crmrte")
+hist(crimeData$crmrte, breaks=20, main = "Histogram of Crime Rate"
+     , cex.main=0.8, xlab="Crime Rate (crmrte)")
 ```
 
 To take care of outliers and fit the variable into normal distribution, we can easily take a log of crime rate. However, we observed that the values of crimes rates per person are between 0 and 1. This range is not suitable for logarithms. 
@@ -89,8 +90,8 @@ Instead, we decided to scale by creating new variable for crime rate per 1000 pe
 summary(crimeData$crmrte)
 crimeData$crmrtepk <- crimeData$crmrte * 1000
 crimeData$log_crmrtepk <- log(crimeData$crmrtepk)
-hist(crimeData$log_crmrtepk, breaks=20, main = "Histogram of crmrtepk"
-     , cex.main=0.8, xlab="crmrtepk")
+hist(crimeData$log_crmrtepk, breaks=20, main = "Histogram of Log of Crime Rate per K"
+     , cex.main=0.8, xlab="Log of Crime Rate per K (log_crmrtepk)")
 ```
 
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
@@ -105,7 +106,9 @@ While scaling we notice that for county 115 the police per 1000 people is highes
 
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 crimeData$log_polpk <- log(crimeData$polpc * 1000)
-hist(crimeData$log_polpk, breaks=20, main = "Histogram of log_polpk", xlab="log_polpk")
+hist(crimeData$log_polpk, breaks=20
+     , main = "Histogram of Log of Police per K"
+     , xlab="Log of Police per K (log_polpk)")
 summary(crimeData$polpk)
 crimeData[crimeData$polpc>.009,c("county", "polpc", "log_polpk", "avgsen")]
 ```
@@ -124,7 +127,8 @@ Under normal circumstances probabilities should not cross 0 to 1 range, but in t
 In absence of more details on these probabilities we keep the probabilities above 1 as it is and proceed further with our analysis
 
 ```{r fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-data.probabilities <- cbind(crimeData$prbarr,crimeData$prbconv,crimeData$prbpris,deparse.level = 2)
+data.probabilities <- cbind(crimeData$prbarr,crimeData$prbconv,crimeData$prbpris
+                            ,deparse.level = 2)
 colnames(data.probabilities) <- c("prbarr", "prbconv", "prbpris")
 summary(data.probabilities)
 ```
@@ -139,7 +143,7 @@ avgsen shows normal distribution with couple of outliers on right. Out of top 3 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 summary(crimeData$avgsen)
 hist(crimeData$avgsen, breaks=20, main = "Histogram of Average Sentence"
-     , cex.main=0.8, xlab="Average Sentence")
+     , cex.main=0.8, xlab="Average Sentence (avgsen)")
 crimeData[crimeData$avgsen>15,c("county","avgsen","pctmin80", "crmrtepk")]
 ```
 
@@ -151,19 +155,21 @@ crimeData[crimeData$density<.3 | crimeData$density>7,c("county", "density", "mix
 ```
 We have already talked about county 119 having highest density 8.8 people per square mile. Whereas county 173 has very low density of 0.00002 with highest mix of 0.42 i.e. it has highest % of face o face crimes. The population density is so low that mix could be at its peak even by chance. The population density is unrealistically low hence we replace it with mean of density from rest of the counties
 ```{r}
-crimeData[crimeData$density<.3,]$density <- mean(crimeData[crimeData$density>.3,]$density)
+density.mean <- mean(crimeData[crimeData$density>.3,]$density)
+crimeData[crimeData$density<.3,]$density <- density.mean
 ```
 
 
 ### taxpc: tax revenue per capita
 Looking at the histogram of tax revenue per capita, the distribution appears to be positively skewed. Applying `log()` shows the histogram to appear slightly positively skewed. We will also scale this to per 1000 people to bring in line with crime rate. The linear regressions would benefit from this transformation.
 The one outlier with 119 taxpc does not show any other extreme value nor does it show any super high wages to imply high taxes. So this county looks to be wealthy county in general with population paying high taxes from income outside wages.
+
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 hist(crimeData$taxpc, breaks=20, main = "Histogram of Tax revenue per capita"
-     , cex.main=0.8, xlab="Tax revenue per capta")
-hist(log(crimeData$taxpc*1000), breaks=20, main = "Histogram of Log Tax revenue per capita"
-     , cex.main=0.8, xlab="Log of Tax revenue per capta")
+     , cex.main=0.8, xlab="Tax revenue per capta (taxpc)")
 crimeData$log_taxpk <- log(crimeData$taxpc*1000)
+hist(crimeData$log_taxpk, breaks=20, main = "Histogram of Log Tax revenue per K"
+     , cex.main=0.8, xlab="Log of Tax revenue per K (log_taxpk)")
 crimeData[crimeData$taxpc>100,]
 ```
 
@@ -189,8 +195,6 @@ summary(crimeData$pctymle)
 crimeData[crimeData$pctymle>.2,]
 hist(crimeData$pctymle, breaks=20, main = "Percent Young Male"
      , cex.main=.8, xlab = "")
-hist(log(crimeData$pctymle), breaks=20, main = "Log Percent Young Male"
-     , cex.main=.8, xlab = "")
 ```
 
 ### wages
@@ -205,39 +209,48 @@ crimeData$wtotal<-crimeData$wcon+crimeData$wtuc+crimeData$wtrd
                           +crimeData$wfir+crimeData$wser+crimeData$wmfg
                           +crimeData$wfed+crimeData$wsta+crimeData$wloc
 
-wages <- rbind(data.frame(wageType="wcon", wage=crimeData$wcon, meanWage=mean(crimeData$wcon)),
-               data.frame(wageType="wtuc", wage=crimeData$wtuc, meanWage=mean(crimeData$wtuc)),
-               data.frame(wageType="wtrd", wage=crimeData$wtrd, meanWage=mean(crimeData$wtrd)),
-               data.frame(wageType="wfir", wage=crimeData$wfir, meanWage=mean(crimeData$wfir)),
-               data.frame(wageType="wser", wage=crimeData$wser, meanWage=mean(crimeData$wser)),
-               data.frame(wageType="wmfg", wage=crimeData$wmfg, meanWage=mean(crimeData$wmfg)),
-               data.frame(wageType="wfed", wage=crimeData$wfed, meanWage=mean(crimeData$wfed)),
-               data.frame(wageType="wsta", wage=crimeData$wsta, meanWage=mean(crimeData$wsta)),
-               data.frame(wageType="wloc", wage=crimeData$wloc, meanWage=mean(crimeData$wloc)),
-               data.frame(wageType="wtotal", wage=crimeData$wtotal, meanWage=mean(crimeData$wtotal)))
+wages <- rbind(
+  data.frame(wageType="wcon", wage=crimeData$wcon, meanWage=mean(crimeData$wcon)),
+  data.frame(wageType="wtuc", wage=crimeData$wtuc, meanWage=mean(crimeData$wtuc)),
+  data.frame(wageType="wtrd", wage=crimeData$wtrd, meanWage=mean(crimeData$wtrd)),
+  data.frame(wageType="wfir", wage=crimeData$wfir, meanWage=mean(crimeData$wfir)),
+  data.frame(wageType="wser", wage=crimeData$wser, meanWage=mean(crimeData$wser)),
+  data.frame(wageType="wmfg", wage=crimeData$wmfg, meanWage=mean(crimeData$wmfg)),
+  data.frame(wageType="wfed", wage=crimeData$wfed, meanWage=mean(crimeData$wfed)),
+  data.frame(wageType="wsta", wage=crimeData$wsta, meanWage=mean(crimeData$wsta)),
+  data.frame(wageType="wloc", wage=crimeData$wloc, meanWage=mean(crimeData$wloc)),
+  data.frame(wageType="wtotal", wage=crimeData$wtotal, meanWage=mean(crimeData$wtotal)))
 
-ggplot(wages, aes(x=wage)) + geom_histogram(bins=40, color="white") +
-  facet_wrap(~wageType, scales="free") + geom_vline(aes(xintercept=meanWage), color="red")
+ggplot(wages, aes(x=wage)) + 
+  geom_histogram(bins=40, color="white") + 
+  facet_wrap(~wageType, scales="free") + 
+  geom_vline(aes(xintercept=meanWage), color="red")
+```
+
+### Geographic Indicators
+Lets look at the indicator flags for west and central region and indicator for urban counties. There are 22 counties marked under west region and 34 as central. Rest of the counties are neither in west or central region, so we assume they are in east region of North Carolina. Since west and central are not mutually exclusive we can use them for our regression model as is.
+Similarly 8 counties are marked as urban, so we assume rest of the counties as non urban counties. 
+```{r fig.align='center', fig.height=8, fig.width=8, fig.show='hold'}
+sum(crimeData$west)
+sum(crimeData$central)
+sum(crimeData$urban)
 ```
 
 ## Analysis of Key Relationships
+
 It is very imperative to realize the relationship between crime rate and all the data available to us. We'll use `corrplot` to make the exploration of key relationships clearer.
 ```{r  fig.align='center', fig.height=8, fig.width=8, fig.show='hold'}
 corrplot.mixed(cor(crimeData[ , (names(crimeData) %in% 
-                             c("log_crmrtepk", "prbarr", "prbconv", "prbpris", "avgsen"
-                               , "log_polpk", "density", "log_taxpk", "pctmin80", "wtotal"
-                               , "mix", "pctymle"))]),
+                             c("log_crmrtepk", "prbarr", "prbconv", "prbpris"
+                               , "avgsen", "log_polpk", "density", "log_taxpk"
+                               , "pctmin80", "wtotal", "mix", "pctymle", "west"
+                               , "central", "urban"))]),
                tl.pos = "lt", tl.col="black", order="hclust", number.cex=.9, number.digits=2)
 ```
 
-We can see *strong positive* correlation (>.25) between 
+We can see *strong positive* correlation (>.30) between crime rate (log_crmrtepk) and population density (density), total wages (wtotal), taxes (log_taxpk) and whether the counties is urban (urban). Which is logical in the sense that as population density increases because of urbanization,  then wages and taxes would go up and so would the crimes rate in that area will increase. Note that Density itself is correlated with total wages, taxes and urbanization, so we can take only one of these variables in our model to avoid multicollinearity
 
-1. crime rate (log_crmrtepk) and population density (density), total wages (wtotal) and taxes (log_taxpk). Which is logical in the sense that as population density increases, wages and taxes would go up and so would the crimes rate in that area will increase. Note that Density itself is correlated with total wages and taxes, so we can take only one of these variables in our model to avoid multi co-linearity.
-
-2. crime rate (log_crmrtepk) and % of male population (pctymle). Historically it has been observed that men are involved in crime more than woman. So this relation makes logical sense. As male population increases there is higher number of criminal activity and hence more crime rate in that area.
-
-
-On the opposite side, we can see *strong negative* correlation (< -.25) between crime rate (log_crmrtepk) and probability of arrest (prbarr) and probability of conviction (prbconv). And the two probabilities are not correlated with each other.
+On the opposite side, we can see *strong negative* correlation (< -.30) between crime rate (log_crmrtepk) and probability of arrest (prbarr) and probability of conviction (prbconv). And the two probabilities are not correlated with each other. We also see strong negative correlation with western counties. It indicates lower cries in western counties.
 
 Apart from these strong correlations, we also have *weak positive* correlation between crime rate and % of minority (pctmin80). The relation is not so strong and hence we need not include in our primary model.
 
@@ -248,29 +261,99 @@ There is another interesting trio of relationships. As mix of face to face crime
 # Proposed Models
 
 ## Model 1: with only the explanatory variables
-As observed during our EDA, probability of arrest (prbarr), probability of conviction (prbconv), density (density) and percent of young male (pctymle) show largest effect on crime rate (log_crmrtepk). Therefore, it is logical to include those variables in our model. 
+As observed during our EDA, probability of arrest (prbarr), probability of conviction (prbconv), density (density) and whether the county is in western region (west) show largest effect on crime rate (log_crmrtepk). Therefore, it is logical to include those variables in our model. 
 
 Although it is tempting to include log_polpk, we decided not to include it. We found it illogical to say crime rate increases as police per capita increases, whereas the reality is other way round, that is, police per capita increases as crime rate increases. 
 
 Given that, we're recommending the following model:
 
-$$model1 = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot log_polpk$$
+$$model1 = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west$$
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-#crimeData <- crimeData[-c(51),  ]
-
-model1 <- lm(log_crmrtepk ~ density + prbarr + prbconv + pctymle, data=crimeData)
-summary(model1)
-cov1 <- vcovHC(model1, type = "HC")
-robust.se1 <- sqrt(diag(cov1))
+model1 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west, data=crimeData)
+summary(model1)$coefficients[,"Estimate"]
+summary(model1)$cov.unscaled
+summary(model1)$adj.r.squared
 ```
 
-TODO: mix shows weak negative correlation with wage. See detailed correlation matrix for mix vs all wages and see if we can find something.
+The model fits fir 67.4% of the population. This is fairly good fit.
+The crime rate is positively proportional to density while inversely proportional to rest of the explanatory variables.
+We also note that none of the explanatory variables is highly correlated with any other explanatory variable.
 
-### Model1 CLM Assumptions Analysis
+Now lets look at the coefficients for their practical significance.
+Every unit increase in density results in approximately 1% increase in crime rate.
+If we increase the probability of arrest by by 1% then crime rate would decrease by approximately 12% (1/100 of coefficient).
+Similarly for 1% increase in conviction ration will decrease crime rate by 5% (1/100 of coefficient)
+If the county is in western region then crime rate is 37% lesser than average crime rate.
 
 
-#### CLM.1 - Zero Conditional Mean
+## Model 2: with key explanatory variables and only covariates
+In this model, we'll include the variables (avgsen, mix, central), as we think they will contribute to the accuracy of your results without introducing substantial bias. These variables show good degree of correlation with crime rate, as well as, linear relationship as observed in the EDA. 
+
+$$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west\\
+ + \beta_5 \cdot avgsen + \beta_6 \cot mix + + \beta_7 \cdot central$$
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+model2 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west 
+             + avgsen + mix + central, data=crimeData)
+summary(model2)$coefficients[,"Estimate"]
+summary(model2)$cov.unscaled
+summary(model2)$adj.r.squared
+```
+
+We see slight increase in model fit. We are able to fit 70% of our population by adding 3 new covariates into model 1.
+But at the same time we see that some of the new covariates added in model 2 have high correlation with existing variables. This will induce multicollinearity into our model.
+
+## Model 3: includes the previous covariates, and most, if not all, other covariates
+In this model, we'll include all the data available to us to demonstrate the robustness of results to model specification. 
+
+$$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west\\
+ + \beta_5 \cdot avgsen + \beta_6 \cdot mix + + \beta_7 \cdot central + \\
+\beta_8 \cdot pctmin80 + \beta_9 \cdot log_taxpk + \beta_{10} \cdot urban + \beta_{11} \cdot pctmyle\\
+\beta_{12} \cdot prbpris + \beta_{13} \cdot log_polpk + \beta_{14} \cdot wtotal$$
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+model3 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west
+             + avgsen + mix + central + pctmin80 + log_taxpk + urban 
+             + pctymle + prbpris  + log_polpk+ wtotal, data=crimeData)
+summary(model3)$coefficients[,"Estimate"]
+summary(model3)$adj.r.squared
+```
+The adjusted R square has jumped to 81% indicating the all inclusive model3 is able to predict 81% of the population. But we expect a lot of multicollinearity and overlap between various variables making it difficult to identify true effect of any one variable on crime rate.
+
+## All 3 Regression models at a glance
+
+```{r results = "asis"} 
+cov1 <- vcovHC(model1)
+robust.se1 <- sqrt(diag(cov1))
+cov2 <- vcovHC(model2)
+robust.se2 <- sqrt(diag(cov2))
+cov3 <- vcovHC(model3)
+robust.se3 <- sqrt(diag(cov3))
+robust.se <- list(robust.se1, robust.se2, robust.se3)
+
+stargazer(model1, model2, model3
+          ,dep.var.labels = "Log of Crime Rate per 1000 People"
+          ,covariate.labels = c("Probability of Arrest", "Probability of Conviction"
+                                ,"Population Density", "Is Western County"
+                                , "Average Sentence", "Face to Face Crime %"
+                                , "Is Central County","% of Minority"
+                                , "Log of tax per K", "Is Urban County", "% of Male"
+                                , "Probability of Prison", "Log of Police per K"
+                                , "Total Wage")
+          ,order = c("prbarr", "prbconv", "density", "west"), single.row = TRUE
+          ,title="Comparison of 3 Regression models", float=FALSE, header = FALSE, report="vc*sp"
+          ,star.cutoffs = c(.05, .01, .001), se = robust.se)
+```
+
+Note that 'Density' coefficient drastically changes in model 3 because variables like 'Total Wage' and 'Log of Police per K'  distribute are synonymous to increase in density and they absorb some of the causality of density.
+Similarly addition of '% of Minority' in model 3 reduces the effect of 'Is Western County' as western counties have very low minority population hence '% of Minority' absorbs some of the causal effect of west variable in model 3.
+
+## CLM Assumptions Analysis
+
+### Model1 
+
+#### Assumption.1 - Zero Conditional Mean
 
 We’ll now plot model1 in order to assess if the model has zero conditional mean.
 
@@ -286,15 +369,15 @@ Looking at the above plots we observe the following:
 
 Given #1 and #2, we're confident to say this assumption is met.
 
-#### CLM.3 - Linear in Parameters
+#### Assumption.2 - Linear in Parameters
 
 Looking at the above residual vs leverage plot, we can say the assumption is met.
 
-#### CLM.3 - Random Sampling
+#### Assumption.3 - Random Sampling
 
 It is not clear to us how the dataset was collected, but we only know it is from 90 counties. Given that North Carolina has 100 counties, it makes us believe this is good enough sampling to consider this assumption as met.
 
-#### CLM.4 - Multicollinearity
+#### Assumption.4 - Multicollinearity
 
 To test this assumption, we'll run the `vif` command
 
@@ -302,24 +385,24 @@ To test this assumption, we'll run the `vif` command
 vif(model1)
 ```
 
-Given the small values for all the variables, we'll consider this assumption is met.
+Given the small values (less than 5) for all the variables, we'll consider this assumption is met.
 
-#### CLM.5 - Homoskedasticity
+#### Assumption.5 - Homoskedasticity
 
-We will generate the Scale-Location plot to asses if the model meets the assumption. 
+Lets run Breusch-Pagan test to verify Homosckedasticity
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-plot(model1, which=3)
+bptest(model1)
 ```
 
-It is not clear whether we have met, or violated the assumption, so we'll use robust standard error to address any possible heteroskedasticity.
+Because of large p value (> 0.05), our null hypothesis that model is Homosckedastic can not be rejected. So the assumption is met.
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 coeftest(model1, vcov = vcovHC)
 vcovHC(model1)
 ```
 
-#### CLM.6 - Normality of Residuals
+#### Assumption.6 - Normality of Residuals
 We will look at the QQ-plot to assess the normality of residuals.
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
@@ -328,108 +411,14 @@ plot(model1, which=2)
 
 We see a beautiful solid line with few outliers at each end, but we're still considering this condition is met.
 
-## Model 2: with key explanatory variables and only covariates
-In this model, we'll include the variables (avgsen, mix, pctmin80), as we think they will contribute to the accuracy of your results without introducing substantial bias. These variables show good degree of correlation with crime rate, as well as, linear relationship as observed in the EDA. 
-
-$$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \\
-\beta_3 \cdot prbconv + \beta_4 \cdot log_polpk + \beta_5 \cdot avgsen + \beta_6 \cot mix + \\
-+ \beta_7 \cdot pctmin80$$
-
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-model2 <- lm(log_crmrtepk ~ density + prbarr + prbconv + log_polpk 
-             + avgsen + mix + pctmin80, data=crimeData)
-summary(model2)
-cov2 <- vcovHC(model2, type = "HC")
-robust.se2 <- sqrt(diag(cov2))
-```
-
 ### Model2 CLM Assumptions Analysis
 
-#### CLM.1 - Zero Conditional Mean
-
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-plot(model2, which=c(1, 5))
-```
-
-In the residual vs fitted plot we can observe a nice red spline line remains close to 0, there is a slight dip in one side, but it is not significant. The assumption is met. 
-
-#### CLM.3 - Linear in Parameters
-
-Looking at the above residual vs leverage plot, we can say the assumption is met.
-
-#### CLM.3 - Random Sampling
-
-It is not clear to us how the dataset was collected, but we only know it is from 90 counties. Given that North Carolina has 100 counties, it makes us believe this is good enough sampling to consider this assumption as met.
-
-#### CLM.4 - Multicollinearity
-
-To test this assumption, we'll run the `vif` command
-
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-vif(model2)
-```
-
-Given the small values for all the variables, we'll consider this assumption is met.
-
-#### CLM.5 - Homoskedasticity
-
-We will generate the Scale-Location plot to asses if the model meets the assumption. 
-
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-plot(model2, which=3)
-```
-
-It is not clear whether we have met, or violated the assumption, so we'll use robust standard error to address any possible heteroskedasticity.
-
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-coeftest(model2, vcov = vcovHC)
-vcovHC(model2)
-```
-
-#### CLM.6 - Normality of Residuals
-We will look at the QQ-plot to assess the normality of residuals.
-
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-plot(model2, which=2)
-```
-
-
-## Model 3: includes the previous covariates, and most, if not all, other covariates
-In this model, we'll include all the data available to us to demonstrate the robustness of results to model specification. 
-
-$$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \\
-\beta_3 \cdot prbconv + \beta_4 \cdot pctymle + \beta_5 \cdot avgsen+ \beta_6 \cdot mix + \\
-\beta_7 \cdot pctmin80 +\\
-\beta_8 \cdot prbpris + \beta_9 \cdot log_polpk + \beta_{10} \cdot wtotal$$
-
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-model3 <- lm(log_crmrtepk ~ density + prbarr + prbconv + log_polpk
-             + avgsen + mix + pctmin80 
-             + pctymle + prbpris  + wtotal, data=crimeData)
-summary(model3)
-cov3 <- vcovHC(model3, type = "HC")
-robust.se3 <- sqrt(diag(cov3))
-```
+We don't see any of the assumptions being violated for model 2.
 
 ### Model3 CLM Assumptions Analysis
 
-#### CLM.1 - Zero Conditional Mean
-
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-plot(model3, which=c(1, 5))
-```
-
-In the residual vs fitted plot we can observe a nice red spline line remains close to 0, there is a slight dip in one side, but it is not significant. The assumption is met. 
-
-#### CLM.3 - Linear in Parameters
-
-Looking at the above residual vs leverage plot, we can say the assumption is met.
-
-#### CLM.3 - Random Sampling
-
-It is not clear to us how the dataset was collected, but we only know it is from 90 counties. Given that North Carolina has 100 counties, it makes us believe this is good enough sampling to consider this assumption as met.
-
-#### CLM.4 - Multicollinearity
+We see 2 assumption Multicollinearity and Homoskedasticity showing alarming results. Lets see them in detail.
+#### Assumption.4 - Multicollinearity
 
 To test this assumption, we'll run the `vif` command
 
@@ -437,66 +426,37 @@ To test this assumption, we'll run the `vif` command
 vif(model3)
 ```
 
-Given the small values for all the variables, we'll consider this assumption is met.
+density coefficient is 4.8 which is very close to being termed as high value. This indicates there is multicollinearity between density and another variable added in model 3. This was evident from our earlier correlation matrix analysis as well. Density shows high correlation with 'urban' and 'wtotal' variables. This is logical as urbanization accelerates, population density increases and wages grow.
 
-#### CLM.5 - Homoskedasticity
+#### Assumption.5 - Homoskedasticity
 
-We will generate the Scale-Location plot to asses if the model meets the assumption. 
-
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-plot(model3, which=3)
-```
-
-It is not clear whether we have met, or violated the assumption, so we'll use robust standard error to address any possible heteroskedasticity.
+Lets run Breusch-Pagan test to verify Homosckedasticity
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-coeftest(model3, vcov = vcovHC)
-vcovHC(model3)
+bptest(model3)
+plot(model3, which = 3)
 ```
 
-#### CLM.6 - Normality of Residuals
-We will look at the QQ-plot to assess the normality of residuals.
+The p-values of < 0.05 indicates we can reject the null hypothesis that model is Homosckedastic i.e. model is Heteroskedestic. Same can be concluded by looking at Scale-Location plot where we can see residual variance range varies across fitted-values axes.
 
-```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
-plot(model3, which=2)
-```
-
-## All 3 Regression models at a glance
-
-```{r results = "asis"} 
-#stargazer(model1, model2, model3, se = list(robust.se1,robust.se2, robust.se3),
-#          dep.var.labels = "Log of Crime Rate per 1000 People",
-#          order = c("prbarr", "prbconv", "density"), single.row = T, align = T,no.space=T,
-#          title="Comparison of 3 Regression models", float=FALSE, header = FALSE)
-
-stargazer(model1, model2, model3, se = list(robust.se1,robust.se2, robust.se3)
-          ,dep.var.labels = "Log of Crime Rate per 1000 People"
-          ,order = c("prbarr", "prbconv", "density"), no.space=TRUE, single.row = TRUE
-          ,title="Comparison of 3 Regression models", float=FALSE, header = FALSE)
-```
-
-Note that density coefficient drastically changes in model 3 because variables like wtotal and log_polpk distribute are synonymous to increase in density and they absorb some of the causality of density.
-
-TODO: Talk about Q-Q plot and fitment and slight distortion due to outliers.
 
 ## Omitted Variables
 We believe that following omitted variables may contribute towards crime rate regression results.
 
 1. Literacy: Higher the literacy, crime rate should go down. In general terms as literacy increases, it is easier for people to find jobs, which deters them from conducting crimes. 
+Literacy can be measured by number of years of education per capita. This variable should have negative correlation with crime rate and positive correlation with tax per capita and wages.
 
 2. Poverty: If per capita income is not distributed equally then there is high chance of crimes in that area. Tax per capita tries to proxy this variable but it does not capture the high to low distribution of income. If per capita income has huge variance from mean then crime rate should go up. Different wages provided in the data may act as proxy as they cover most of the wage range except may be farming and other self-employed people.
 
-3. Corruption: Higher the corruption, more the crime rate in the area. More corruption generally disrupts employment and effectively pushes people into criminal activity.
+3. Corruption: Higher the corruption, more the crime rate in the area. More corruption generally disrupts employment and effectively pushes people into criminal activity. It is difficult to measure corruption by observing any statistical figure. Only way to measure corruption is by conducting surveys and gathering public feedback. Corruption should have negative correlation with crime rate and tax per capita.
 
-4. Historic criminal rate of the area: If previous generation had high criminal rate in a particular area then new generation would grow in that area and continue following same foot steps. So we should also measure this continuity effect. It is much easier for new people to turn to criminals where there are already plenty of established criminals than areas where crime is low.
-
-% population below poverty line
-
-
+4. Historic criminal rate of the area: If previous generation had high criminal rate in a particular area then a next generation person being raised in that area has higher scope and encouragement to follow the same foot steps. So we should also measure this continuity effect. Of course there will always be exceptions and outliers in this measurement but crime rate is not something that spikes up or down rather it grows with time or comes down with time. So if we get 5 year, 10 year etc. time period average crime rates for that county we can better estimate future crime rate of a county and advise correctly to policy makers.
 
 # Conclusion
-Our Regression Model (Model 1) indicates that as population density increases and the young male percentage increases, the crime rate grows. So policymakers need to pay attention to more urbanized or highly dense regions with a high male ratio. Also, steps should be taken to improve gender by diversifying the community, for instance bringing more women and men of different age groups, which potentially can bring down crime rate.
+Our Regression Model (Model 1) indicates that as population density increases the crime rate goes up. The model also tells us that western counties have significantly lower (37%) crime rate than rest of the North Carolina. So policymakers need to pay attention to more urbanized or highly dense regions specially outside western region.
 
-More important aspect is the effect of strong arrest and conviction ratio on the crime rate. Having strong and capable police has a noticeable deterrent effect on crime rate. Therefore, policymakers should concentrate on strengthening the police and judiciary system and deter people from committing crimes by setting strong examples of arrests and convictions.
+More important aspect is the effect of strong arrest and conviction ratio on the crime rate. Having strong and capable police has a noticeable deterrent effect on crime rate. Therefore, policymakers should concentrate on strengthening the police and judiciary system and deter people from committing crimes by setting strong examples of arrests and convictions. Between the two factors, 1 % increase in probability of arrest has higher impact on crime rate reduction vs 1 % increase in probability of conviction (12% vs 5%). So if policymakers have to choose one out of two due to budgetary or any other constraints then they should first look at strengthening the police force to increase arrest.
 
-TODO: Also talk about small conclusions drawn from EDA which did not reach to regression model (outliers etc)
+Apart from our regression model we have following suggestions that may help designing political campaign.
+1. County 119 has 1 crime per every 10 people.The county also has highest population density. A detailed analysis is required to understand what are the causes of such a high crime rate.
+2. We observe some drastic parameters for county 185. It has highest arrest to conviction ratio but least average sentence while having highest minority population. The county also shows very high weekly wage in service industry. This raises an alarm. It indicates lot of people are getting convicted but for smaller duration. The fact that county has highest population of minorities, policy makers need to be vigilant and ensure that minority is not harassed or abused. We need to check if there are lot of illegal immigrants working in service industry in this county. Also we need to verify if convictions are valid or law has been abused. If convictions are valid but for petite crimes then citizens should be educated about such crimes so that we can decrease the crimes and the arrest. 
