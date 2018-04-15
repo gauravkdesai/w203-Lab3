@@ -250,7 +250,7 @@ corrplot.mixed(cor(crimeData[ , (names(crimeData) %in%
 
 We can see *strong positive* correlation (>.30) between crime rate (log_crmrtepk) and population density (density), total wages (wtotal), taxes (log_taxpk) and whether the counties is urban (urban). Which is logical in the sense that as population density increases because of urbanization,  then wages and taxes would go up and so would the crimes rate in that area will increase. Note that Density itself is correlated with total wages, taxes and urbanization, so we can take only one of these variables in our model to avoid multicollinearity
 
-On the opposite side, we can see *strong negative* correlation (< -.30) between crime rate (log_crmrtepk) and probability of arrest (prbarr) and probability of conviction (prbconv). And the two probabilities are not correlated with each other. We also see strong negative correlation with western counties. It indicates lower cries in western counties.
+On the opposite side, we can see *strong negative* correlation (< -.30) between crime rate (log_crmrtepk) and probability of arrest (prbarr) and probability of conviction (prbconv). And the two probabilities are not correlated with each other. We also see strong negative correlation with western counties. It indicates lower crimes in western counties.
 
 Apart from these strong correlations, we also have *weak positive* correlation between crime rate and % of minority (pctmin80). The relation is not so strong and hence we need not include in our primary model.
 
@@ -265,7 +265,9 @@ As observed during our EDA, probability of arrest (prbarr), probability of convi
 
 Although it is tempting to include log_polpk, we decided not to include it. We found it illogical to say crime rate increases as police per capita increases, whereas the reality is other way round, that is, police per capita increases as crime rate increases. 
 
-Given that, we're recommending the following model:
+We have also considered (log_taxpk, pctymale) for this model, but we concluded that none of these is stasitcally signficant.
+
+Given all of the above, we're recommending the following model:
 
 $$model1 = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west$$
 
@@ -288,10 +290,17 @@ If the county is in western region then crime rate is 37% lesser than average cr
 
 
 ## Model 2: with key explanatory variables and only covariates
-In this model, we'll include the variables (avgsen, mix, central), as we think they will contribute to the accuracy of your results without introducing substantial bias. These variables show good degree of correlation with crime rate, as well as, linear relationship as observed in the EDA. 
+In this model, we'll include the variables (avgsen, mix), as we think they will contribute to the accuracy of your results without introducing substantial bias. These variables show good degree of correlation with crime rate, as well as, linear relationship as observed in the EDA. 
+
+We also considered other variables such as taxpc, but because of the non-linear relationship with crime rate and the clear violation to the Linearity assumption, we decided not to include it.
+
+pctmin80 was also considered for this model. Although it is statistically signfifent, we realized that a negative correlation between western counties and pctmin80.
+
+#TODO - Gaurav to add more from his head analysis! i.e why central.
+
 
 $$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west\\
- + \beta_5 \cdot avgsen + \beta_6 \cot mix + + \beta_7 \cdot central$$
+ + \beta_5 \cdot avgsen + \beta_6 \cot mix + \beta_7 \cdot central$$
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 model2 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west 
@@ -315,7 +324,8 @@ $$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 model3 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west
              + avgsen + mix + central + pctmin80 + log_taxpk + urban 
-             + pctymle + prbpris  + log_polpk+ wtotal, data=crimeData)
+             + pctymle + prbpris  + log_polpk + wtotal, data=crimeData)
+summary(model3)
 summary(model3)$coefficients[,"Estimate"]
 summary(model3)$adj.r.squared
 ```
@@ -346,12 +356,23 @@ stargazer(model1, model2, model3
           ,star.cutoffs = c(.05, .01, .001), se = robust.se)
 ```
 
-Note that 'Density' coefficient drastically changes in model 3 because variables like 'Total Wage' and 'Log of Police per K'  distribute are synonymous to increase in density and they absorb some of the causality of density.
-Similarly addition of '% of Minority' in model 3 reduces the effect of 'Is Western County' as western counties have very low minority population hence '% of Minority' absorbs some of the causal effect of west variable in model 3.
+The above summary deomonstrates the following:
+
+1. `prbarr` and `prbconv` have the best estimates in all three models.
+
+2. `density` coefficient drastically changes in model 3 because variables like `wtotal` and `log_polpk` distribution are synonymous to increase in density and they absorb some of the causality of density.
+
+3. The addition of `pctmin80` in model 3 reduces the effect of Is Western County as western counties have very low minority population hence `pctmin80` absorbs some of the causal effect of west variable in model 3.
+
+4. Adding additional variables to model 2 could have increasd the R squared but we'll introduce violations to CLM assumptions.
+
+5. Although Model 3 has the highest R square, CLM assumptions such as linearity and multicollinearity.
 
 ## CLM Assumptions Analysis
 
-### Model1 
+In this section we'll analyze CLM assumptions of Model 1.
+
+### Model1 CLM Assumptions Analysis
 
 #### Assumption.1 - Zero Conditional Mean
 
@@ -365,7 +386,7 @@ Looking at the above plots we observe the following:
 
 1. The residual vs fitted indicates that while the red spline line remains close to 0, there is a slight dip and rise and both ends, which may be due to some outlier observations.
 
-2. The residual vs leverage indicates that the outlier (#51 to be precise) did not cross the Cook's distance, which is a good sign that the outlier influence is limited.
+2. The residual vs leverage indicates that the outlier (#51 and #53 to be precise). Observation #51 in particular, crosses Cook's distance, which is concerning. We analyzed what it is special about it and realized it has outliers values for all three variables. Our recommendation would be to remove this observation, which will demonstrate that the assumption is not violated.
 
 Given #1 and #2, we're confident to say this assumption is met.
 
