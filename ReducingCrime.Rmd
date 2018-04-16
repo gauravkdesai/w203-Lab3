@@ -296,9 +296,9 @@ We also considered other variables such as taxpc, but because of the non-linear 
 
 pctmin80 was also considered for this model. Although it is statistically significant, we realized that a negative correlation between western counties and pctmin80.
 
-\begin{multline*}
-crimeRateDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west + \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctymle
-\end{multline*} 
+\begin{align*}
+crimeRateDeterm = &\beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west + \beta_5 \cdot avgsen + \\ & \beta_6 \cdot mix + \beta_7 \cdot pctymle
+\end{align*}
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 model2 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west 
