@@ -297,12 +297,8 @@ We also considered other variables such as taxpc, but because of the non-linear 
 pctmin80 was also considered for this model. Although it is statistically significant, we realized that a negative correlation between western counties and pctmin80.
 
 \begin{align*}
-<<<<<<< HEAD
 crimeRateDeterm &= \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west \\
 &+ \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctymle
-=======
-crimeRateDeterm = &\beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west + \beta_5 \cdot avgsen + \\ & \beta_6 \cdot mix + \beta_7 \cdot pctymle
->>>>>>> master
 \end{align*}
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
@@ -320,15 +316,9 @@ But at the same time we see that some of the new covariates added in model 2 hav
 In this model, we'll include all the data available to us to demonstrate the robustness of results to model specification. 
 
 \begin{align*}
-<<<<<<< HEAD
 crimeRateDeterm &= \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west \\
 &+ \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctmyle \beta_8 \cdot pctmin80 + \beta_9 \cdot log\_taxpk \\
 &+ \beta_{10} \cdot urban + \beta_{11} \cdot central + \beta_{12} \cdot prbpris + \beta_{13} \cdot log\_polpk + \beta_{14} \cdot wtotal
-=======
-crimeRateDeterm = &\beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west +\\
-& \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctmyle \beta_8 \cdot pctmin80 + \beta_9 \cdot log\_taxpk + \\
-& \beta_{10} \cdot urban + \beta_{11} \cdot central + \beta_{12} \cdot prbpris + \beta_{13} \cdot log\_polpk + \beta_{14} \cdot wtotal
->>>>>>> master
 \end{align*}
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
@@ -477,11 +467,7 @@ bptest(model2)
 
 Because of large p value (> 0.05), our null hypothesis that model is Homosckedastic can not be rejected. So the assumption is met.
 
-<<<<<<< HEAD
 #### Assumption.6 - Normality of Residuals
-=======
-#### Assumption.5 - Normality of Residuals
->>>>>>> master
 We will look at the QQ-plot to assess the normality of residuals.
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
@@ -529,11 +515,7 @@ plot(model3, which = 3)
 
 The p-values of < 0.05 indicates we can reject the null hypothesis that model is Homosckedastic i.e. model is Heteroskedestic. Same can be concluded by looking at Scale-Location plot where we can see residual variance range varies across fitted-values axes.
 
-<<<<<<< HEAD
 #### Assumption.6 - Normality of Residuals
-=======
-#### CLM.6 - Normality of Residuals
->>>>>>> master
 We will look at the QQ-plot to assess the normality of residuals.
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
