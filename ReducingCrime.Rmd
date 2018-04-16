@@ -269,7 +269,7 @@ We have also considered (log_taxpk, pctymle) for this model, but we concluded th
 
 Given all of the above, we're recommending the following model:
 
-$$model1 = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west$$
+$$crimeRateDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west$$
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 model1 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west, data=crimeData)
@@ -297,7 +297,7 @@ We also considered other variables such as taxpc, but because of the non-linear 
 pctmin80 was also considered for this model. Although it is statistically significant, we realized that a negative correlation between western counties and pctmin80.
 
 \begin{multline*}
-model2 = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west + \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctymle
+crimeRateDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west + \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctymle
 \end{multline*} 
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
@@ -314,11 +314,11 @@ But at the same time we see that some of the new covariates added in model 2 hav
 ## Model 3: includes the previous covariates, and most, if not all, other covariates
 In this model, we'll include all the data available to us to demonstrate the robustness of results to model specification. 
 
-\begin{multline*}
-model3 = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west +\\
-\beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctmyle \beta_8 \cdot pctmin80 + \beta_9 \cdot log\_taxpk + \\
-\beta_{10} \cdot urban + \beta_{11} \cdot central + \beta_{12} \cdot prbpris + \beta_{13} \cdot log\_polpk + \beta_{14} \cdot wtotal
-\end{multline*} 
+\begin{align*}
+crimeRateDeterm = &\beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west +\\
+& \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctmyle \beta_8 \cdot pctmin80 + \beta_9 \cdot log\_taxpk + \\
+& \beta_{10} \cdot urban + \beta_{11} \cdot central + \beta_{12} \cdot prbpris + \beta_{13} \cdot log\_polpk + \beta_{14} \cdot wtotal
+\end{align*}
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 model3 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west
