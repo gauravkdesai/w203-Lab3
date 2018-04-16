@@ -296,9 +296,9 @@ We also considered other variables such as taxpc, but because of the non-linear 
 
 pctmin80 was also considered for this model. Although it is statistically significant, we realized that a negative correlation between western counties and pctmin80.
 
-
-$$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west \\
- + \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctymle$$
+\begin{multline*}
+model2 = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west + \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctymle
+\end{multline*} 
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 model2 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west 
@@ -314,10 +314,11 @@ But at the same time we see that some of the new covariates added in model 2 hav
 ## Model 3: includes the previous covariates, and most, if not all, other covariates
 In this model, we'll include all the data available to us to demonstrate the robustness of results to model specification. 
 
-$$crimeDeterm = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west \\
- + \beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctmyle \\
- + \beta_8 \cdot pctmin80 + \beta_9 \cdot log\_taxpk + \beta_{10} \cdot urban + \beta_{11} \cdot central \\
- + \beta_{12} \cdot prbpris + \beta_{13} \cdot log\_polpk + \beta_{14} \cdot wtotal$$
+\begin{multline*}
+model3 = \beta_0 + \beta_1 \cdot density + \beta_2 \cdot prbarr + \beta_3 \cdot prbconv + \beta_4 \cdot west +\\
+\beta_5 \cdot avgsen + \beta_6 \cdot mix + \beta_7 \cdot pctmyle \beta_8 \cdot pctmin80 + \beta_9 \cdot log\_taxpk + \\
+\beta_{10} \cdot urban + \beta_{11} \cdot central + \beta_{12} \cdot prbpris + \beta_{13} \cdot log\_polpk + \beta_{14} \cdot wtotal
+\end{multline*} 
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 model3 <- lm(log_crmrtepk ~ density + prbarr + prbconv + west
@@ -429,7 +430,7 @@ We see a beautiful solid line with few outliers at each end, but we're still con
 
 ### Model2 CLM Assumptions Analysis
 
-#### CLM.1 - Zero Conditional Mean
+#### Assumption.1 - Zero Conditional Mean
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 plot(model2, which=c(1, 5))
@@ -437,15 +438,15 @@ plot(model2, which=c(1, 5))
 
 In the residual vs fitted plot we can observe a nice red spline line remains close to 0, there is a slight dip in one side, but it is not significant. The assumption is met. 
 
-#### CLM.3 - Linear in Parameters
+#### Assumption.2 - Linear in Parameters
 
 Looking at the above residual vs leverage plot, we can say the assumption is met.
 
-#### CLM.3 - Random Sampling
+#### Assumption.3 - Random Sampling
 
 It is not clear to us how the dataset was collected, but we only know it is from 90 counties. Given that North Carolina has 100 counties, it makes us believe this is good enough sampling to consider this assumption as met.
 
-#### CLM.4 - Multicollinearity
+#### Assumption.4 - Multicollinearity
 
 To test this assumption, we'll run the `vif` command
 
@@ -455,7 +456,7 @@ vif(model2)
 
 Given the small values for all the variables, we'll consider this assumption is met.
 
-#### CLM.5 - Homoskedasticity
+#### Assumption.5 - Homoskedasticity
 
 Lets run Breusch-Pagan test to verify Homosckedasticity
 
@@ -465,7 +466,7 @@ bptest(model2)
 
 Because of large p value (> 0.05), our null hypothesis that model is Homosckedastic can not be rejected. So the assumption is met.
 
-#### CLM.6 - Normality of Residuals
+#### Assumption.5 - Normality of Residuals
 We will look at the QQ-plot to assess the normality of residuals.
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
@@ -476,7 +477,7 @@ We can see a clear normality proof line.
 
 ### Model3 CLM Assumptions Analysis
 
-#### CLM.1 - Zero Conditional Mean
+#### Assumption.1 - Zero Conditional Mean
 
 ```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
 plot(model3, which=c(1, 5))
@@ -484,11 +485,11 @@ plot(model3, which=c(1, 5))
 
 In the residual vs fitted plot we can observe a nice red spline line remains close to 0, there is a slight dip in one side, but it is not significant. The assumption is met. 
 
-#### CLM.3 - Linear in Parameters
+#### Assumption.2 - Linear in Parameters
 
 Looking at the above residual vs leverage plot, we can say the assumption is met.
 
-#### CLM.3 - Random Sampling
+#### Assumption.3 - Random Sampling
 
 Similar to model1 and model2, we are not clear to us how the dataset was collected, but we only know it is from 90 counties. Given that North Carolina has 100 counties, it makes us believe this is good enough sampling to consider this assumption as met.
 
@@ -512,6 +513,13 @@ plot(model3, which = 3)
 ```
 
 The p-values of < 0.05 indicates we can reject the null hypothesis that model is Homosckedastic i.e. model is Heteroskedestic. Same can be concluded by looking at Scale-Location plot where we can see residual variance range varies across fitted-values axes.
+
+#### CLM.6 - Normality of Residuals
+We will look at the QQ-plot to assess the normality of residuals.
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(model3, which=2)
+```
 
 ## Omitted Variables
 We believe that following omitted variables may contribute towards crime rate regression results.
