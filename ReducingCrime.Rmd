@@ -367,8 +367,6 @@ The above summary demonstrates the following:
 
 ## CLM Assumptions Analysis
 
-In this section we'll analyze CLM assumptions of Model 1.
-
 ### Model1 CLM Assumptions Analysis
 
 #### Assumption.1 - Zero Conditional Mean
@@ -384,6 +382,11 @@ Looking at the above plots we observe the following:
 1. The residual vs fitted indicates that while the red spline line remains close to 0, there is a slight dip and rise and both ends, which may be due to some outlier observations.
 
 2. The residual vs leverage indicates that there are outlier (#51 and #53 to be precise). Observation #51 in particular, is just under Cook's distance of 1, which is concerning. We analyzed what is special about it and realized county 115 has highest values for three variables - police per capita, density and average sentence. There is something special about this county to show highest values in 3 separate explanatory variables. Our recommendation would be to remove this observation to reduce the effect of this outlier on our regression model. Since cook's distance does not cross critical value of 1 the assumption is not violated.
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+model1.no.outliers <- lm(model1, data = crimeData[-51, ])
+plot(model1.no.outliers, which=c(1, 5))
+```
 
 Given #1 and #2, we're confident to say this assumption is met.
 
@@ -426,11 +429,69 @@ We see a beautiful solid line with few outliers at each end, but we're still con
 
 ### Model2 CLM Assumptions Analysis
 
-We don't see any of the assumptions being violated for model 2.
+#### CLM.1 - Zero Conditional Mean
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(model2, which=c(1, 5))
+```
+
+In the residual vs fitted plot we can observe a nice red spline line remains close to 0, there is a slight dip in one side, but it is not significant. The assumption is met. 
+
+#### CLM.3 - Linear in Parameters
+
+Looking at the above residual vs leverage plot, we can say the assumption is met.
+
+#### CLM.3 - Random Sampling
+
+It is not clear to us how the dataset was collected, but we only know it is from 90 counties. Given that North Carolina has 100 counties, it makes us believe this is good enough sampling to consider this assumption as met.
+
+#### CLM.4 - Multicollinearity
+
+To test this assumption, we'll run the `vif` command
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+vif(model2)
+```
+
+Given the small values for all the variables, we'll consider this assumption is met.
+
+#### CLM.5 - Homoskedasticity
+
+Lets run Breusch-Pagan test to verify Homosckedasticity
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+bptest(model2)
+```
+
+Because of large p value (> 0.05), our null hypothesis that model is Homosckedastic can not be rejected. So the assumption is met.
+
+#### CLM.6 - Normality of Residuals
+We will look at the QQ-plot to assess the normality of residuals.
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(model2, which=2)
+```
+
+We can see a clear normality proof line.
 
 ### Model3 CLM Assumptions Analysis
 
-We see 2 assumption Multicollinearity and Homoskedasticity showing alarming results. Lets see them in detail.
+#### CLM.1 - Zero Conditional Mean
+
+```{r  fig.align='center', fig.height=3, fig.width=3, fig.show='hold'}
+plot(model3, which=c(1, 5))
+```
+
+In the residual vs fitted plot we can observe a nice red spline line remains close to 0, there is a slight dip in one side, but it is not significant. The assumption is met. 
+
+#### CLM.3 - Linear in Parameters
+
+Looking at the above residual vs leverage plot, we can say the assumption is met.
+
+#### CLM.3 - Random Sampling
+
+Similar to model1 and model2, we are not clear to us how the dataset was collected, but we only know it is from 90 counties. Given that North Carolina has 100 counties, it makes us believe this is good enough sampling to consider this assumption as met.
+
 #### Assumption.4 - Multicollinearity
 
 To test this assumption, we'll run the `vif` command
@@ -452,7 +513,6 @@ plot(model3, which = 3)
 
 The p-values of < 0.05 indicates we can reject the null hypothesis that model is Homosckedastic i.e. model is Heteroskedestic. Same can be concluded by looking at Scale-Location plot where we can see residual variance range varies across fitted-values axes.
 
-
 ## Omitted Variables
 We believe that following omitted variables may contribute towards crime rate regression results.
 
@@ -470,6 +530,10 @@ Our Regression Model (Model 1) indicates that as population density increases th
 
 More important aspect is the effect of strong arrest and conviction ratio on the crime rate. Having strong and capable police has a noticeable deterrent effect on crime rate. Therefore, policymakers should concentrate on strengthening the police and judiciary system and deter people from committing crimes by setting strong examples of arrests and convictions. Between the two factors, 1 % increase in probability of arrest has higher impact on crime rate reduction vs 1 % increase in probability of conviction (12% vs 5%). So if policymakers have to choose one out of two due to budgetary or any other constraints then they should first look at strengthening the police force to increase arrest.
 
-Apart from our regression model we have following suggestions that may help designing political campaign.
-1. County 119 has 1 crime per every 10 people.The county also has highest population density. A detailed analysis is required to understand what are the causes of such a high crime rate.
-2. We observe some drastic parameters for county 185. It has highest arrest to conviction ratio but least average sentence while having highest minority population. The county also shows very high weekly wage in service industry. This raises an alarm. It indicates lot of people are getting convicted but for smaller duration. The fact that county has highest population of minorities, policy makers need to be vigilant and ensure that minority is not harassed or abused. We need to check if there are lot of illegal immigrants working in service industry in this county. Also we need to verify if convictions are valid or law has been abused. If convictions are valid but for petite crimes then citizens should be educated about such crimes so that we can decrease the crimes and the arrest. 
+Apart from our regression model, we have following suggestions that may help designing political campaign policies:
+
+1. There is a strong correlation between crime rate and the probability of arrest and conviction. The campaign should focus on counties with the lowest number of arrests and convictions.
+
+2. County 119 has 1 crime per every 10 people.The county also has highest population density. A detailed analysis is required to understand what are the causes of such a high crime rate. Possibly one or more of the omitted variables has a role on this.
+
+3. We observe some drastic parameters for county 185. It has highest arrest to conviction ratio but least average sentence while having highest minority population. The county also shows very high weekly wage in service industry. This raises an alarm. It indicates lot of people are getting convicted but for smaller duration. The fact that county has highest population of minorities, policy makers need to be vigilant and ensure that minority is not harassed or abused. We need to check if there are lot of illegal immigrants working in service industry in this county. Also we need to verify if convictions are valid or law has been abused. If convictions are valid but for petite crimes then citizens should be educated about such crimes so that we can decrease the crimes and the arrest. 
